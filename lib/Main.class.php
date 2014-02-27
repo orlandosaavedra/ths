@@ -36,17 +36,7 @@ class Main
         try{
             $dbm = new THSModel();
         }catch(Exception $e){
-            $diag = new GtkDialog(
-                    'Error',
-                    null,
-                    Gtk::DIALOG_MODAL,
-                    array(Gtk::STOCK_OK, Gtk::RESPONSE_OK)
-                    );
-
-            $diag->vbox->pack_start(new GtkLabel("No se pudo conectar a la base de datos"));
-            $diag->show_all();
-            $diag->run();
-            exit(1);
+            Main::handleException($e);
         }
         
         $login = new LoginWindow();
@@ -146,6 +136,27 @@ class Main
     public static function refresh()
     {
         while(Gtk::events_pending()){ Gtk::main_iteration(); }
+    }
+    
+    public function handleException(Exception $e)
+    {
+        $diag = new GtkDialog(
+                    'Error',
+                    null,
+                    Gtk::DIALOG_MODAL,
+                    array(Gtk::STOCK_OK, Gtk::RESPONSE_OK)
+                    );
+        $lerrorImage = GtkImage::new_from_icon_name(Gtk::STOCK_DIALOG_ERROR, GTK::ICON_SIZE_BUTTON);
+        $rerrorImage = GtkImage::new_from_icon_name(Gtk::STOCK_DIALOG_ERROR, Gtk::ICON_SIZE_BUTTON);
+        $hbox = new GtkHBox;
+        $hbox->pack_start($lerrorImage, false, false);
+        $hbox->pack_start(new GtkLabel($e->getMessage()));
+        $hbox->pack_start($rerrorImage, false, false);
+        $diag->vbox->pack_start($hbox);
+        $diag->show_all();
+        $diag->run();
+        exit(1);
+        
     }
     
 }

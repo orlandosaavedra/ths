@@ -11,7 +11,7 @@
  *
  * @author orlando
  */
-class Category 
+class ProductCategory 
 {
     public $id;
     public $name;

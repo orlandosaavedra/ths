@@ -70,8 +70,18 @@ class ProductCartFrame extends GtkFrame
         $vbox->pack_end($hbox, false, false);
         
         $hbox = new GtkHBox(true);
+        $hbox->pack_start(new GtkLabel('Neto:'));
+        $hbox->pack_start($this->net = new GtkEntry('0'));
+        $vbox->pack_end($hbox,false,false);
+        
+        $hbox = new GtkHBox(true);
         $hbox->pack_start(new GtkLabel('Descuento:'));
-        $hbox->pack_start($this->discount = new GtkEntry('0'));
+        $group = new GtkHBox();
+        $group->pack_start($this->pdiscount = new GtkEntry('0', 2), false, false);
+        $group->pack_start(new GtkLabel('%'));
+        $group->pack_start($this->discount = new GtkEntry('0'));
+        $this->pdiscount->set_size_request(40, -1);
+        $hbox->pack_start($group);
         $vbox->pack_end($hbox, false, false);
         
         $hbox = new GtkHBox(true);
@@ -88,8 +98,13 @@ class ProductCartFrame extends GtkFrame
         $this->total->connect('key-press-event', array('Main', 'restrictNumbersOnly'));
         $this->total->connect_after('key-release-event', array($this, 'recalc'));
         $this->discount->set_alignment(1);
-        $this->discount->connect('key-press-event', array('Main', 'restrictNumbersOnly'));
-        $this->discount->connect_after('key-release-event', array($this, 'recalc'));
+        $this->discount->set_editable(false);
+        $this->pdiscount->set_alignment(1);
+        $this->pdiscount->connect('key-press-event', array('Main', 'restrictNumbersOnly'));
+        $this->pdiscount->connect_after('key-release-event', array($this, 'recalc'));
+        $this->net->connect('key-press-event', array('Main', 'restrictNumbersOnly'));
+        $this->net->connect_after('key-release-event', array($this, 'recalc'));
+        $this->net->set_alignment(1);
         
         return $vbox;
     }
@@ -158,7 +173,7 @@ class ProductCartFrame extends GtkFrame
     public function recalc($changed=null)
     {
         if (null === $changed){
-            $changed = $this->discount;
+            $changed = $this->pdiscount;
         }
         
         $model = $this->_view->get_model();
@@ -173,27 +188,43 @@ class ProductCartFrame extends GtkFrame
         
         $this->subtotal->set_text("$subtotal");
         
-        if ($changed === $this->discount){
-            $discount = $this->discount->get_text();
-            $total = $subtotal-$discount;
-            $tax = round($total*0.19, 0);
-            $total = $total+$tax;
+        if ($changed === $this->pdiscount){
+            $pdiscount = $this->pdiscount->get_text();
+            $discount = (((int)$pdiscount/100)*(int)$subtotal);
+            $this->discount->set_text($discount);
+            $net = $subtotal - $discount;
+            $tax = round($net*0.19, 0);
+            $total = $net+$tax;
+            $this->net->set_text($net);
             $this->tax->set_text($tax);
             $this->total->set_text($total);
-        }else{
+        }else if ($changed === $this->total){
             $total = $this->total->get_text();
-            $tax = round($total - ($total/1.19), 0);
+            $net = round($total / 1.19);
+            $tax = $total-$net;
             $this->tax->set_text($tax);
-            
-            $asubtotal = $total - $tax;
-            
-            if ($subtotal < $asubtotal){
+            $this->net->set_text($net);
+                        
+            if ($subtotal < $net){
                 
-            }else if ($subtotal>$asubtotal){
-                $discount = $subtotal-$asubtotal;
+            }else if ($subtotal>$net){
+                $discount = $subtotal-$net;
                 $this->discount->set_text($discount);
+                $pdiscount = round($discount/$subtotal * 100, 0);
+                $this->pdiscount->set_text($pdiscount);
             }
             
+        }else if ($changed === $this->net){
+            $net = $this->net->get_text();
+            $subtotal = $this->subtotal->get_text();
+            $discount = $subtotal - $net;
+            $this->discount->set_text($discount);
+            $pdiscount = $discount / $subtotal * 100;
+            $this->pdiscount->set_text(round($pdiscount, 0));
+            $tax = round($net * 0.19, 0);
+            $this->tax->set_text($tax);
+            $total = $net + $tax;
+            $this->total->set_text($total);
         }
         
         return false;

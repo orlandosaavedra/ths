@@ -22,29 +22,9 @@ class ProductCompatibilityFrame extends GtkFrame
     
     /**
      *
-     * @var GtkComboBox
+     * @var CompatibilityFilterHBox
      */
-    protected $modelcbox;
-    /**
-     *
-     * @var GtkComboBox
-     */
-    protected $startyearcbox;
-    /**
-     *
-     * @var GtkComboBox
-     */
-    protected $endyearcbox;
-    /**
-     *
-     * @var GtkComboBox
-     */
-    protected $versioncbox;
-    /**
-     *
-     * @var GtkComboBox
-     */
-    protected $transmissioncbox;
+    protected $compatibilityFilter;
     
     public function __construct($store=true)
     {
@@ -54,38 +34,8 @@ class ProductCompatibilityFrame extends GtkFrame
         $this->add($vbox);
         $hbox = new GtkHBox;
         $this->panel = $hbox;
-        
-        $this->modelcbox = $model = GtkComboBox::new_text();
-        $this->populateModels();
-        
-        $this->startyearcbox = $startyear = GtkComboBox::new_text();
-        $this->endyearcbox = $endyear = GtkComboBox::new_text();
-        $this->versioncbox = $version = GtkComboBox::new_text();
-        $this->transmissioncbox = $transmission = GtkComboBox::new_text();
-        
-        $model->connect(
-                'changed', //signal
-                array($this, 'compatModelChanged'), //callback
-                $startyear, $endyear, $version, $transmission //params
-                );
-        
-        $startyear->connect_simple(
-                'changed', 
-                array($this, 'compatStartYearChanged'),
-                $model, $startyear, $endyear, $version, $transmission
-                );
-        
-        $endyear->connect_simple(
-                'changed',
-                array($this, 'compatEndYearChanged'),
-                $model, $startyear, $endyear, $version, $transmission
-                );
-        
-        $version->connect_simple(
-                'changed', 
-                array($this, 'compatVersionChanged'),
-                $model, $startyear, $endyear, $version, $transmission
-                );
+        $this->compatibilityFilter = new CompatibilityFilterHBox();
+        $hbox->pack_start($this->compatibilityFilter);
         
         if ($store){
             $addbtn = new GtkButton('Agregar');
@@ -97,19 +47,7 @@ class ProductCompatibilityFrame extends GtkFrame
             $confbtn->add($image);
             $confbtn->connect_simple('clicked', array($this, 'modifyCompatibilities'));
         }
-        
-        $hbox->pack_start(new GtkLabel('Modelo:'));
-        $hbox->pack_start($model);
-        $hbox->pack_start(new GtkLabel('Desde:'));
-        $hbox->pack_start($startyear);
-        $hbox->pack_start(new GtkLabel('Hasta:'));
-        $hbox->pack_start($endyear);
-        $hbox->pack_start(new GtkLabel('Versión:'));
-        $hbox->pack_start($version);
-        $hbox->pack_start(new GtkLabel('Transmisión'));
-        
-        $hbox->pack_start($transmission);
-        
+
         if ($store){
             $hbox->pack_start($addbtn);
             $hbox->pack_start($rmbtn);
@@ -121,13 +59,9 @@ class ProductCompatibilityFrame extends GtkFrame
         if ($store){
             
             $this->_createCompatibilityListView();
-            $addbtn->connect_simple(
-                    'clicked', array($this, 'addCompatibility'),
-                    $model, $startyear,$endyear, $version, $transmission
-                    );
+            $addbtn->connect_simple('clicked', array($this, 'addCompatibility'));
 
-            $rmbtn->connect_simple(
-                    'clicked', array($this, 'removeCompatibility'));
+            $rmbtn->connect_simple('clicked', array($this, 'removeCompatibility'));
         }
     }
     
@@ -139,7 +73,7 @@ class ProductCompatibilityFrame extends GtkFrame
         $win = new CategoriesWindow(CategoriesWindow::VEHICLE_FRAME);
         $win->set_transient_for($this->get_toplevel());
         $win->set_modal(true);
-        $win->connect_simple('destroy', array($this, 'populateModels'));
+        $win->connect_simple('destroy', array($this, 'clearFilter'));
         $win->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
         $win->set_size_request(400, 250);
         $win->show_all();
@@ -147,7 +81,7 @@ class ProductCompatibilityFrame extends GtkFrame
     
     public function addCompatibility()
     {
-        $pc = $this->getCompatibility();
+        $pc = $this->compatibilityFilter->getActiveCompatibility();
         $this->storeCompatibility($pc);
     }
     
@@ -155,16 +89,9 @@ class ProductCompatibilityFrame extends GtkFrame
      * 
      * @param GtkComboBox $cbox
      */
-    public function populateModels()
+    public function clearFilter()
     {
-        $dbm = new THSModel;
-        $vmodels = $dbm->getVehicleModels();
-        $cbox = $this->modelcbox;
-        $cbox->get_model()->clear();
-        $cbox->append_text(self::MATCH_ALL);
-        foreach ($vmodels as $vmodel){
-            $cbox->append_text($vmodel);
-        }
+        $this->compatibilityFilter->changed();
     }
     
    /**
@@ -197,123 +124,7 @@ class ProductCompatibilityFrame extends GtkFrame
         
         $this->get_child()->pack_start($scrwin);
     }
-    
-    /**
-     * 
-     * @param GtkComboBox $model
-     * @param GtkComboBox $startyear
-     * @param GtkComboBox $endyear
-     * @param type $version
-     * @param type $transmission
-     */
-    public function compatModelChanged($model, $startyear, $endyear, $version, $transmission)
-    { 
-        // If ALL is selected we must get all availalbe years, otherwise just to the applied model
-        if ($model->get_active_text() !== self::MATCH_ALL){
-            $vmodel = $model->get_active_text();
-        }else{
-            $vmodel = null;
-        }
-        
-        $dbm = new THSModel();
-        $years = $dbm->getVehicleModelYears($vmodel);
-        $max = max($years);
-        $min = min($years);
-        $startyear->get_model()->clear();
-        $endyear->get_model()->clear();
-        $version->get_model()->clear();
-        $transmission->get_model()->clear();
-        
-        $startyear->append_text(self::MATCH_ALL);
-        foreach($years as $year){
-            $startyear->append_text($year);
-        }
-    }
-    
-    /**
-     * 
-     * @param GtkComboBox $model
-     * @param GtkComboBox $startyear
-     * @param GtkComboBox $endyear
-     * @param GtkComboBox $version
-     * @param GtkComboBox $transmission
-     * @return null
-     */
-    public function compatStartYearChanged($model, $startyear, $endyear, $version, $transmission)
-    {
-        // If ALL is selected we must get all availalbe years, otherwise just to the applied model
-        if ($model->get_active_text() !== self::MATCH_ALL){
-            $vmodel = $model->get_active_text();
-        }else{
-            $vmodel = null;
-        }
-        
-        $dbm = new THSModel;
-        $years = $dbm->getVehicleModelYears($vmodel);
-        $max = max($years);
-        $min = (int)$startyear->get_active_text();
-        
-        $endyear->get_model()->clear();
-        $version->get_model()->clear();
-        $transmission->get_model()->clear();
-        
-        if ($min === 0){
-            $endyear->append_text(self::MATCH_ALL);
-            return;
-        }
-        
-        foreach($years as $year){
-            if ($year<$min)continue;
-            $endyear->append_text($year);
-        }
-        
-    }
-    
-    /**
-     * Handles population of version widget
-     * @param GtkComboBox $model
-     * @param GtkComboBox $startyear
-     * @param GtkComboBox $endyear
-     * @param GtkComboBox $version
-     * @param GtkComboBox $transmission
-     */
-    public function compatEndYearChanged($model, $startyear, $endyear, $version, $transmission)
-    {
 
-        $dbm = new THSModel;
-        $vmodel = $model->get_active_text();
-        $vsyear = ($startyear->get_active_text() == self::MATCH_ALL)? null: $startyear->get_active_text();
-        $veyear = ($endyear->get_active_text() == self::MATCH_ALL)? null: $endyear->get_active_text();
-        
-        $versions = $dbm->getVehicleModelVersions($vmodel, $vsyear, $veyear);
-        
-        $version->get_model()->clear();
-        $transmission->get_model()->clear();
-        
-        $version->append_text(self::MATCH_ALL);
-        foreach ($versions as $v){
-            $version->append_text($v);
-        }
-    }
-    
-    public function compatVersionChanged($model, $startyear, $endyear, $version, $transmission)
-    {
-        $dbm = new THSModel;
-        $vmodel = ($model->get_active_text() == self::MATCH_ALL)? null : $model->get_active_text();
-        $vsyear = ($startyear->get_active_text() == self::MATCH_ALL)? null: $startyear->get_active_text();
-        $veyear = ($endyear->get_active_text() == self::MATCH_ALL)? null: $endyear->get_active_text();
-        $vversion = ($version->get_active_text() == self::MATCH_ALL)? null : $version->get_active_text();
-        $transmissions = $dbm->getVehicleModelTransmissions($vmodel, $vsyear, $veyear, $vversion, $transmission);
-        
-        $transmission->get_model()->clear();
-        
-        $transmission->append_text(self::MATCH_ALL);
-        foreach ($transmissions as $t){
-            $transmission->append_text($t);
-        }
-        
-    }
-    
     /**
      * 
      * @param GtkComboBox $model
@@ -407,25 +218,12 @@ class ProductCompatibilityFrame extends GtkFrame
     
     public function getCompatibility()
     {
-        $compat = new ProductCompatibility();
-        $mdl = $this->modelcbox->get_active_text();
-        $compat->model = ($mdl == self::MATCH_ALL)? null: $mdl;
-        $sy = $this->startyearcbox->get_active_text();
-        $compat->startyear = ($sy == self::MATCH_ALL)? null: $sy;
-        $ey = $this->endyearcbox->get_active_text();
-        $compat->endyear = ($ey == self::MATCH_ALL)? null: $ey;
-        $v = $this->versioncbox->get_active_text();
-        $compat->version = ($v==self::MATCH_ALL)?null:$v;
-        $t = $this->transmissioncbox->get_active_text();
-        $compat->transmission = ($t==self::MATCH_ALL)?null:$t;
-        
-        return $compat;
-        
+        return $this->compatibilityFilter->getActiveCompatibility();        
     }
     
     public function clear()
     {
-        $this->populateModels();
+        $this->compatibilityFilter->changed();
         $this->view->get_model()->clear();
     }
     

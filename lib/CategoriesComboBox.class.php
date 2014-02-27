@@ -47,7 +47,7 @@ class CategoriesComboBox extends GtkComboBox
         
         $model = $this->get_model();
         
-        $a = new Category();
+        $a = new ProductCategory();
         $a->id = $model->get_value($iter, 0);
         $a->name = $model->get_value($iter, 1);
         

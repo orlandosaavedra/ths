@@ -113,11 +113,6 @@ class ProductCreateWindow extends GtkWindow
             $dbm->setProductCompatibility($id, $compatibility);
         }
         
-        $this->general->clear();
-        $this->stock->clear();
-        $this->compatibility->clear();
-        $this->category->populate();
-        
         $diag = new GtkDialog(
                 'Correcto',
                 $this,
@@ -127,6 +122,12 @@ class ProductCreateWindow extends GtkWindow
         $diag->vbox->add(new GtkLabel('Producto creado con id : '.$id));
         $diag->show_all();
         $diag->run();
+        
+        $this->general->clear();
+        $this->stock->clear();
+        $this->compatibility->clear();
+        $this->category->populate();
+        
         $diag->destroy();
     }
 }

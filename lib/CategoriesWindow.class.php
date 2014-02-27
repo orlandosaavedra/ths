@@ -1,11 +1,4 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of CreateProductCategoryWindow
  *
@@ -97,13 +90,18 @@ class CategoriesWindow extends GtkWindow
         $combo->populate();
         $hbox = new GtkHBox;
         $hbox->pack_start($combo);
+        $editbtn = new GtkButton('Editar');
+        $editbtn->connect_simple('clicked', array($this, 'editCategory'));
         $delbtn = new GtkButton('Quitar');
         $delbtn->connect_simple('clicked', array($this, 'deleteCategory'));
         $addbtn = new GtkButton('Nueva');
         $addbtn->connect_simple('clicked', array($this, 'createCategory'));
         $hbox->pack_start($delbtn, false, false);
-        $hbox->pack_start($addbtn, false, false);
-        $frame->add($hbox);
+        $hbox->pack_start($editbtn, false, false);
+        $vbox = new GtkVBox;
+        $vbox->pack_start($hbox);
+        $vbox->pack_start($addbtn);
+        $frame->add($vbox);
         $this->get_child()->pack_start($frame, false, false);
     }
     
@@ -155,7 +153,7 @@ class CategoriesWindow extends GtkWindow
         $row = array();
         
         $row[] = array(new GtkLabel('Modelo:'), $model = new GtkEntry());
-        $row[] = array(new GtkLabel('Año'), $year = GtkSpinButton::new_with_range(1900, date('Y'), 1));
+        $row[] = array(new GtkLabel('Año:'), $year = GtkSpinButton::new_with_range(1900, date('Y'), 1));
         $row[] = array(
             $throughact=new GtkCheckButton('Crear para varios años'),
             $through=GtkSpinButton::new_with_range(1900, date('Y'), 1)
@@ -173,8 +171,7 @@ class CategoriesWindow extends GtkWindow
         
         
         
-        $row[] = array(new GtkLabel('Version'), $version = new GtkEntry());
-        $row[] = array(new GtkLabel('Transmisión'), $transmission = new GtkEntry());
+        $row[] = array(new GtkLabel('Version:'), $version = new GtkEntry());
         
         $vbox = $dialog->vbox;
         
@@ -184,6 +181,18 @@ class CategoriesWindow extends GtkWindow
             $hbox->pack_start($r[1]);
             $vbox->pack_start($hbox);
         }
+        
+        $hbox = new GtkHBox(true);
+        $rbgroup = new GtkHBox;
+        $att = new GtkRadioButton($att=null, 'AT');
+        $mtt = new GtkRadioButton($att, 'MT');
+        $both = new GtkRadioButton($att, 'Crear ambas');
+        $rbgroup->pack_start($att);
+        $rbgroup->pack_start($mtt);
+        $rbgroup->pack_start($both);
+        $hbox->pack_start(new GtkLabel('Transmisión:'));
+        $hbox->pack_start($rbgroup);
+        $vbox->pack_start($hbox);
         
         $dialog->show_all();
         switch($dialog->run()){
@@ -195,26 +204,34 @@ class CategoriesWindow extends GtkWindow
                 $vmodel = $model->get_text();
                 $vyear = $year->get_value();
                 $vversion = $version->get_text();
-                $vtransmission = trim($transmission->get_text());
+                
+                if ($att->get_active()){
+                    $vtransmission = 'AT';
+                }elseif ($mtt->get_active()){
+                    $vtransmission = 'MT';
+                }else{
+                    $vtransmission = null;
+                }
                 
                 if ($throughact->get_active()){
                     for ($i=$vyear; $i<=$through->get_value();++$i){
-                        if (!$dbm->createVehicle($vmodel, $i, $vversion, $vtransmission)){
-                            $dialog->destroy();
-                            return $this->create();
+                        if ($vtransmission===null){
+                            $dbm->createVehicle($vmodel, $i, $vversion, 'AT');
+                            $dbm->createVehicle($vmodel, $i, $vversion, 'MT');
+                        }else{
+                            $dbm->createVehicle($vmodel, $i, $vversion, $vtransmission);
                         }
                     }
                     
                     $dialog->destroy();
                     $this->populate();
                 }else{
-                    if ($dbm->createVehicle($vmodel, $vyear, $vversion, $vtransmission)){
-                        $dialog->destroy();
-                        $this->populate();
-                    }else{
-                        $dialog->destroy();
-                        return $this->create();
+                    if ($vtransmission === null){
+                        $dbm->createVehicle($vmodel, $vyear, $vversion, 'AT');
+                        $dbm->createVehicle($vmodel, $vyear, $vversion, 'MT');
                     }
+                    $dialog->destroy();
+                    $this->populate();
                 }
                 break;
         }
@@ -317,5 +334,30 @@ class CategoriesWindow extends GtkWindow
                 break;
         }
         
+    }
+    
+    public function editCategory()
+    {
+        $category = $this->combo->getActive();
+        
+        $diag = new GtkDialog(
+                'Editar categoria', 
+                $this,
+                Gtk::DIALOG_MODAL, 
+                array(Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
+                    Gtk::STOCK_OK, Gtk::RESPONSE_OK));
+        
+        $entry = new GtkEntry($category->name);
+        $diag->vbox->add($entry);
+        $diag->show_all();
+        
+        if ($diag->run() ==  Gtk::RESPONSE_OK){
+            $dbm = new THSModel();
+            $category->name = $entry->get_text();
+            $dbm->updateProductCategory($category);
+            $this->combo->populate();
+        }
+        
+        $diag->destroy();
     }
 }

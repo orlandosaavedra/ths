@@ -80,6 +80,13 @@ class ProductGeneralFrame extends GtkFrame
         $this->productDescription = $description = new GtkEntry();
         $description->set_max_length(200);
         
+        $this->productCost->connect(
+                'value-changed',
+                function($cost, $price){
+                    $v = $cost->get_value();
+                    $price->set_value($v*1.3);
+                }, $this->productPrice);
+        
         /**
          * Packing
          */
@@ -215,6 +222,7 @@ class ProductGeneralFrame extends GtkFrame
         $this->productStateNew->set_active(true);
         $this->productId->set_text('');
         $this->productPartnumber->set_text('');
+        $this->productCost->set_value(0);
         $this->productPrice->set_value(0);
         $this->productDescription->set_text('');
         Main::refresh();

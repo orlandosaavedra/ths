@@ -49,6 +49,9 @@ class THSModel extends MySqli
             case 2003:
                 throw new Exception('No se pudo conectar');
                 break;
+            case 1049:
+                throw new Exception('No existe la base de datos');
+                break;
         }
     }
     
@@ -144,7 +147,7 @@ class THSModel extends MySqli
         $partnumber = ($product->partnumber)? "'".$product->partnumber."'": 'NULL';
         $cost = ($product->cost)?: 0;
         $price = ($product->price)?: 0;
-        $description = $this->escape_string($product->description);
+        $description = $this->escape_string(strtoupper($product->description));
         
         $sql = "INSERT INTO `product` "
              . "(`id`, `partnumber`, `state`,"
@@ -384,14 +387,15 @@ class THSModel extends MySqli
 
         $cat = array();
         $qres = $this->query("SELECT * FROM category");
-        while ($cat[] = $qres->fetch_object('Category'));
+        while ($cat[] = $qres->fetch_object('ProductCategory'));
         array_pop($cat);
         return $cat;
     }
     
-    public function createProductCategory($category)
+    public function createProductCategory($name)
     {
-        if ($this->query("INSERT INTO `category` VALUES(NULL, '$category')")){
+        $name = strtoupper($name);
+        if ($this->query("INSERT INTO `category` VALUES(NULL, '$name')")){
             return true;
         }else{
             return false;
@@ -544,12 +548,14 @@ class THSModel extends MySqli
             throw new Exception('Can\'t update null');
         }
         
+        $description = $this->escape_string(strtoupper($product->description));
+        
         $category = ($product->category)?"'{$product->category}'": 'NULL';
         
         $sql = "UPDATE `product` SET "
                 . " `partnumber`='{$product->partnumber}',"
                 . " `state`='{$product->state}',"
-                . " `description`='{$product->description}',"
+                . " `description`='{$description}',"
                 . " `cost`='{$product->cost}',"
                 . " `price`='{$product->price}',"
                 . " `category_id`=$category"
@@ -677,5 +683,13 @@ class THSModel extends MySqli
                     . " VALUES ({$sale_id}, {$product->id}, {$product->price})";
             $this->query($sql);
         }
+    }
+    
+    public function updateProductCategory(ProductCategory $category)
+    {
+        $category->name = strtoupper($category->name);
+        $sql = "UPDATE `category` SET `name`='{$category->name}'"
+        . " WHERE `id`={$category->id} LIMIT 1";
+        return $this->query($sql);
     }
 }
