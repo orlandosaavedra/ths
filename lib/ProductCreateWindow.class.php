@@ -1,11 +1,4 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of IncomeCreateWindow
  *
@@ -18,6 +11,12 @@ class ProductCreateWindow extends GtkWindow
      * @var ProductGeneralFrame
      */
     public $general;
+    
+    /**
+     *
+     * @var ProductCodesFrame
+     */
+    public $codes;
     /**
      *
      * @var ProductCategoryFrame
@@ -64,14 +63,18 @@ class ProductCreateWindow extends GtkWindow
         $this->add($vbox);
         
         $this->general = new ProductGeneralFrame();
+        $this->codes = new ProductCodesFrame();
         $this->category = new ProductCategoryFrame();
         $this->compatibility = new ProductCompatibilityFrame();
         $this->stock= new ProductStockFrame();
         
         $vbox->pack_start($this->general, false, false, 5);
-        $vbox->pack_start($this->category, false, false, 5);
-        $vbox->pack_start($this->stock, false, false, 5);
-        $vbox->pack_start($this->compatibility, true, true, 5);
+        $hbox = new GtkHBox();        
+        $vbox->pack_start($this->codes);
+        $vbox->pack_start($this->compatibility);
+        $vbox->pack_start($this->category, false, false);
+        $vbox->pack_start($this->stock, false, false);        
+        
         
         $this->createbtn = new GtkButton('Crear');
         $this->createbtn->connect_simple('clicked', array($this, 'create'));
@@ -99,6 +102,12 @@ class ProductCreateWindow extends GtkWindow
         
         if (!$id){
             return false;
+        }
+        
+        $codes = $this->codes->getCodes();
+        
+        foreach ($codes as $code){
+            $dbm->addProductCode($id, $code->reference, $code->code);
         }
         
         $stock = $this->stock->getStock();

@@ -132,6 +132,10 @@ class CompatibilityFilterHBox extends GtkHBox
     public function getActiveCompatibility()
     {
         $model = $this->model->get_active_text();
+        if ($model === null){
+            return null;
+        }
+        
         if ($model === CompatibilityFilterComboBox::MATCH_ALL){
             $model = null;
         }

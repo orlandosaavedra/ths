@@ -33,6 +33,9 @@ class ProductModifyWindow extends ProductCreateWindow
         $this->general->productPrice->set_value((double)$product->price);
         $this->general->productDescription->set_text($product->description);
         
+        $codes = $dbm->getProductCodes($product->id);
+        $this->codes->populate($codes);
+        
         // Sets product condition (New or Used)
         if ($product->state == Product::STATE_NEW){
             $this->general->productStateNew->set_active(true);
@@ -63,8 +66,15 @@ class ProductModifyWindow extends ProductCreateWindow
             return;
         }
         
+        $dbm->deleteProductCodes($product->id);
+        
+        $codes = $this->codes->getCodes();
+        foreach ($codes as $code){
+            $dbm->addProductCode($product->id, $code->reference, $code->code);
+        }
+        
         //DIRTY
-        $dbm->query("DELETE FROM `compatibility` WHERE `product_id`='{$product->id}'");
+        $dbm->query("DELETE FROM `product_compatibility` WHERE `product_id`='{$product->id}'");
         
         $compatibilities = $this->compatibility->getCompatibilityStore();
         

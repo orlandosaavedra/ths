@@ -101,7 +101,7 @@ class THSModel extends MySqli
      */
     public function getProductStock($product_id)
     {
-        $sql = "SELECT `branch_id`,`stock` FROM `stock` WHERE `product_id`='$product_id'";
+        $sql = "SELECT `branch_id`,`stock` FROM `product_stock` WHERE `product_id`='$product_id'";
         $branches = $this->getBranches();
         $stock = array();
         
@@ -143,7 +143,7 @@ class THSModel extends MySqli
     public function createProduct(Product $product)
     {
         $id = ($product->id)?: 'NULL';
-        $category = ($product->category)?: 'NULL';
+        $category = ($product->category_id)?: 'NULL';
         $partnumber = ($product->partnumber)? "'".$product->partnumber."'": 'NULL';
         $cost = ($product->cost)?: 0;
         $price = ($product->price)?: 0;
@@ -154,8 +154,8 @@ class THSModel extends MySqli
              . " `description`, `cost`, `price`, `category_id`)"
              . " VALUES "
              . "({$id}, {$partnumber}, {$product->state},"
-             . "'{$description}', {$cost}, {$price}, {$category->id})";
-                
+             . " '{$description}', {$cost}, {$price}, {$category})";
+         echo $sql.PHP_EOL;       
         $this->query($sql);
                 
         if ($this->errno){
@@ -291,12 +291,12 @@ class THSModel extends MySqli
         $ret = array();
         
         $sql  = "SELECT `id` FROM `product` WHERE (`id` LIKE '%$string%'"
-                . " OR partnumber LIKE '%$string%'"
-                . " OR description LIKE '%$string%')";
+                . " OR `partnumber` LIKE '%$string%'"
+                . " OR `description` LIKE '%$string%')";
         
         if ($match){
             
-            $csql = " AND `id` IN (SELECT DISTINCT `product_id` FROM `compatibility`"
+            $csql = " AND `id` IN (SELECT DISTINCT `product_id` FROM `product_compatibility`"
                     . " WHERE `vehicle_id` IN (SELECT `id` FROM `vehicle` WHERE ";
             
             $wcsql = array();
@@ -386,7 +386,7 @@ class THSModel extends MySqli
     {
 
         $cat = array();
-        $qres = $this->query("SELECT * FROM category");
+        $qres = $this->query("SELECT * FROM `product_category`");
         while ($cat[] = $qres->fetch_object('ProductCategory'));
         array_pop($cat);
         return $cat;
@@ -395,7 +395,7 @@ class THSModel extends MySqli
     public function createProductCategory($name)
     {
         $name = strtoupper($name);
-        if ($this->query("INSERT INTO `category` VALUES(NULL, '$name')")){
+        if ($this->query("INSERT INTO `product_category` VALUES(NULL, '$name')")){
             return true;
         }else{
             return false;
@@ -404,7 +404,7 @@ class THSModel extends MySqli
     
     public function removeProductCategory($id)
     {
-        $this->query("DELETE FROM `category` WHERE `id`='{$id}'");
+        $this->query("DELETE FROM `product_category` WHERE `id`='{$id}'");
     }
     
     /**
@@ -418,16 +418,16 @@ class THSModel extends MySqli
     {
         $stock = ($stock<0)? 0 : $stock;
         
-        $this->query("SELECT `stock` FROM `stock` WHERE `product_id`='$product_id' AND `branch_id`='$branch_id'");
+        $this->query("SELECT `stock` FROM `product_stock` WHERE `product_id`='$product_id' AND `branch_id`='$branch_id'");
         
         if ($this->affected_rows > 0){
         
-            $sql = "UPDATE `stock` set `stock`='$stock'";
+            $sql = "UPDATE `product_stock` set `stock`='$stock'";
             $sql .= " WHERE `product_id`='$product_id'";
             $sql .= " AND `branch_id`='$branch_id'";
         
         }else{
-            $sql = "INSERT INTO `stock` VALUES ('$product_id', '$branch_id', '$stock')";
+            $sql = "INSERT INTO `product_stock` VALUES ('$product_id', '$branch_id', '$stock')";
         }
         
         $this->query($sql);
@@ -478,7 +478,7 @@ class THSModel extends MySqli
         $result = $this->query($ssql);
         
         while ($vehicle = $result->fetch_object()){
-            $sql = "INSERT INTO `compatibility` VALUES ($product_id, {$vehicle->id})";
+            $sql = "INSERT INTO `product_compatibility` VALUES ($product_id, {$vehicle->id})";
             Main::debug($sql);
             $this->query($sql);
         }
@@ -490,46 +490,13 @@ class THSModel extends MySqli
     {
         $compatibilities = array();
         
-        $nsql = "SELECT `vehicle_id` FROM `compatibility` WHERE `product_id`='{$pid}'";
+        $nsql = "SELECT `vehicle_id` FROM `product_compatibility` WHERE `product_id`='{$pid}'";
         
         $msql = "SELECT * FROM `vehicle` WHERE `id` IN ($nsql)";
         
         $res = $this->query($msql);
         
         while ($obj = $res->fetch_object('Vehicle')){
-            /*
-            $compatibility = new ProductCompatibility;
-            $compatibility->model = $obj->model;
-            
-            $sql = "SELECT MIN(`year`) as startyear FROM `vehicle` WHERE `id` IN ($nsql)";
-            $res2 = $this->query($sql);
-            $compatibility->startyear = $res2->fetch_object()->startyear;
-            $sql = "SELECT MAX(`year`) as endyear FROM `vehicle` WHERE `id` IN ($nsql)";
-            $res2 = $this->query($sql);
-            $compatibility->endyear = $res2->fetch_object()->endyear;
-            $sql = "SELECT DISTINCT `version` FROM `vehicle`"
-                    . " WHERE `id` IN ($nsql)"
-                    . " AND `year`>='{$compatibility->startyear}'"
-                    . " AND `year`<='{$compatibility->endyear}'";
-                    
-            $has = $this->query($sql)->num_rows;
-            $exist = $this->query(
-                    "SELECT DISTINCT `version` FROM `vehicle`"
-                    . " AND `year`>='{$compatibility->startyear}'"
-                    . " AND `year`<='{$compatibility->endyear}'"
-                    )->num_rows;
-                    
-            if ($has == $exist){
-                $compatibility->version = null;
-            }else{
-                
-            }
-            
-            while ($obj2= $res2->fetch_object()){
-                
-            }
-             * 
-             */
             $compatibility = new ProductCompatibility;
             $compatibility->model = $obj->model;
             $compatibility->startyear = $obj->year;
@@ -603,7 +570,7 @@ class THSModel extends MySqli
         
         if ($only_with_stock!==false){
             $sql .= " WHERE `id` IN ";
-            $sql .= "(SELECT `product_id` FROM `stock` WHERE `stock`>0)";
+            $sql .= "(SELECT `product_id` FROM `product_stock` WHERE `stock`>0)";
         }
         
         $res = $this->query($sql);
@@ -646,7 +613,12 @@ class THSModel extends MySqli
                 break;
         }
         
-        $result = $this->query("INSERT INTO vehicle VALUES (NULL, '$model', '$year', '$version', '$transmission')");
+        $sql = "INSERT INTO `vehicle` "
+                . "(`model`,`year`, `version`, `transmission`) "
+                . "VALUES ('$model', '$year', '$version', '$transmission')";
+        
+        $result = $this->query($sql);
+        
         if ($result){
             return $this->insert_id;
         }  else {
@@ -656,13 +628,14 @@ class THSModel extends MySqli
     
     public function removeVehicle($vehicle_id)
     {
-        return $this->query("DELETE FROM `vehicle` WHERE `id`='$vehicle_id'");
+        $sql = "DELETE FROM `vehicle` WHERE `id`='$vehicle_id'";
+        return $this->query($sql);
     }
     
     /**
      * 
      * @param int $employee_id
-     * @param ProductCartFrame $productCart
+     * @param SalesCartFrame $productCart
      */
     public function registerSale($employee_id, $branch_id, $productCart)
     {
@@ -688,8 +661,36 @@ class THSModel extends MySqli
     public function updateProductCategory(ProductCategory $category)
     {
         $category->name = strtoupper($category->name);
-        $sql = "UPDATE `category` SET `name`='{$category->name}'"
+        $sql = "UPDATE `product_category` SET `name`='{$category->name}'"
         . " WHERE `id`={$category->id} LIMIT 1";
+        return $this->query($sql);
+    }
+    
+    public function addProductCode($pid, $reference, $code)
+    {
+        $reference = $this->escape_string($reference);
+        $code = $this->escape_string($code);
+        $sql = "INSERT INTO `product_code` (`product_id`, `reference`, `code`)"
+                . " VALUES ('$pid', '$reference', '$code')";
+        return $this->query($sql);
+    }
+    
+    public function getProductCodes($pid)
+    {
+        $sql = "SELECT * FROM `product_code` WHERE `product_id`='$pid'";
+        $result = $this->query($sql);
+        $codes = array();
+        
+        while ($obj = $result->fetch_object()){
+            $codes[] = $obj;
+        }
+        
+        return $codes;
+    }
+    
+    public function deleteProductCodes($pid)
+    {
+        $sql = "DELETE FROM `product_code` WHERE `product_id`='$pid'";
         return $this->query($sql);
     }
 }

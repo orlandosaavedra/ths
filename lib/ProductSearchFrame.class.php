@@ -15,7 +15,7 @@ final class ProductSearchFrame extends GtkFrame
 {
     /**
      *
-     * @var ProductView
+     * @var ProductsView
      */
     public $view;
     
@@ -114,21 +114,6 @@ final class ProductSearchFrame extends GtkFrame
         
     }
     
-    private function _buildCombos()
-    {
-        $this->modelCombo = GtkComboBox::new_text();
-        $this->yearCombo = GtkComboBox::new_text();
-        
-        $this->modelCombo->connect('changed', array($this, 'setYear'));
-        
-        $this->modelCombo->append_text('');
-        $this->yearCombo->append_text('');
-        
-        $dbm = new THSModel;
-        foreach ($dbm->getVehicleModels() as $model){
-            $this->modelCombo->append_text($model);
-        }
-    }
     
     public function setYear($combo)
     {
@@ -154,7 +139,7 @@ final class ProductSearchFrame extends GtkFrame
         $scrwin = new GtkScrolledWindow();
         $scrwin->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
         
-        $this->view = new ProductView();
+        $this->view = new ProductsView();
         $scrwin->add($this->view);
         
         $this->_scrwin = $scrwin;

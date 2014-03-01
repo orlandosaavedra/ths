@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of ProductCategoryFrame
  *
@@ -57,6 +51,7 @@ class ProductCategoryFrame extends GtkFrame
     {
         $win = new CategoriesWindow(CategoriesWindow::CATEGORY_FRAME);
         $win->set_transient_for($this->get_toplevel());
+        $win->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
         $win->set_modal(true);
         $win->connect_simple('destroy', array($this, 'populate'));
         $win->show_all();

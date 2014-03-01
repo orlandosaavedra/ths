@@ -1,32 +1,30 @@
-
-
 <?php
 
-$a = new GtkWindow();
-$b = GtkComboBox::new_text();
-$b->append_text('uno');
-$b->append_text('dos');
-$c = new GtkButton('desactivar');
-$c->connect_simple('clicked', array($b, 'set_sensitive'), false);
-$d = new GtkButton('agregar');
-$d->connect_simple('clicked', 'clear',$b);
-function clear(GtkComboBox $b)
-{
-    $b->get_model()->clear();
-    $b->
-}
-function changed(GtkComboBox $box)
-{
-    echo $box->is_focus();
-    echo 'done'.PHP_EOL;
+$win = new GtkWindow();
+$win->connect_simple('destroy', array('gtk', 'main_quit'));
+$win->set_size_request(600,400);
+
+$btn = new GtkButton('save');
+$win->add($btn);
+
+$btn->connect('clicked', 'save', $win);
+
+function save($btn, $win){
+    $dialog = new GtkFileChooserDialog(
+            'Guardar',
+            $win,
+            Gtk::FILE_CHOOSER_ACTION_SAVE,
+            array(Gtk::STOCK_OK, Gtk::RESPONSE_OK,
+                Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL));
+    $dialog->set_current_folder('/tmp');
+    $dialog->set_current_name('cotizacion.pdf');
+    
+    $dialog->run();
+    
+    echo $dialog->get_filename();
 }
 
-$b->connect('changed', 'changed');
 
-$h = new GtkHBox();
-$h->pack_start($b);
-$h->pack_start($c);
-$h->pack_start($d);
-$a->add($h);
-$a->show_all();
+$win->show_all();
+
 Gtk::main();

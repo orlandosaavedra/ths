@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of ProductCompatibilityFrame
  *
@@ -39,7 +33,7 @@ class ProductCompatibilityFrame extends GtkFrame
         
         if ($store){
             $addbtn = new GtkButton('Agregar');
-            $rmbtn = new GtkButton('Quitar');
+            //$rmbtn = new GtkButton('Quitar');
             $confbtn = new GtkButton('');
             $image = GtkImage::new_from_icon_name(Gtk::STOCK_PREFERENCES, Gtk::ICON_SIZE_BUTTON);
             $label = $confbtn->get_child();
@@ -49,9 +43,9 @@ class ProductCompatibilityFrame extends GtkFrame
         }
 
         if ($store){
-            $hbox->pack_start($addbtn);
-            $hbox->pack_start($rmbtn);
-            $hbox->pack_start($confbtn);
+            $hbox->pack_start($addbtn, false, false);
+            //$hbox->pack_start($rmbtn);
+            $hbox->pack_start($confbtn, false, false);
         }
         
         $vbox->pack_start($hbox, false, false);
@@ -61,7 +55,7 @@ class ProductCompatibilityFrame extends GtkFrame
             $this->_createCompatibilityListView();
             $addbtn->connect_simple('clicked', array($this, 'addCompatibility'));
 
-            $rmbtn->connect_simple('clicked', array($this, 'removeCompatibility'));
+            //$rmbtn->connect_simple('clicked', array($this, 'removeCompatibility'));
         }
     }
     
@@ -82,6 +76,9 @@ class ProductCompatibilityFrame extends GtkFrame
     public function addCompatibility()
     {
         $pc = $this->compatibilityFilter->getActiveCompatibility();
+        if ($pc===null){
+            return;
+        }
         $this->storeCompatibility($pc);
     }
     
@@ -120,10 +117,31 @@ class ProductCompatibilityFrame extends GtkFrame
             $col->set_sort_column_id($i);
         }
         
+        $this->view->connect('button-press-event', array($this, 'onButton'));
+        $this->view->get_selection()->set_mode(Gtk::SELECTION_MULTIPLE);
+        
         $scrwin->add($this->view);
         
         $this->get_child()->pack_start($scrwin);
     }
+    
+    public function onButton($view, $event)
+    {
+        if($event->button===1){ return false; }
+        if($event->button===2){ return true; }
+        if($event->button===3){
+            if($this->view->get_path_at_pos($event->x, $event->y)){
+                $menu = new GtkMenu();
+                $rmitem = new GtkMenuItem('Eliminar');
+                $rmitem->connect_simple('activate', array($this,'removeCompatibility'));
+                $menu->append($rmitem);
+                $menu->show_all();
+                $menu->popup();
+                return true;
+            }
+        }
+    }
+
 
     /**
      * 
@@ -133,18 +151,25 @@ class ProductCompatibilityFrame extends GtkFrame
      * @param GtkComboBox $version
      * @param GtkComboBox $transmission
      */
-    public function storeCompatibility(ProductCompatibility $pc) //$model, $startyear, $endyear, $version, $transmission)
+    public function storeCompatibility(ProductCompatibility $pc)
     {
         $viewmodel = $this->view->get_model();
         
-        $viewmodel->append(
-                array(
+        $data = array(
                     $pc->model,//->get_active_text(),
                     $pc->startyear,//->get_active_text(),
                     $pc->endyear,//->get_active_text(),
                     $pc->version,//->get_active_text(),
                     $pc->transmission//->get_active_text())
-                ));
+                );
+        
+        for ($i=0;$i<count($data);++$i){
+            if ($data[$i]===null){
+                $data[$i] = CompatibilityFilterComboBox::MATCH_ALL;
+            }
+        }
+        
+        $viewmodel->append($data);
     }
     
     /**
@@ -153,12 +178,19 @@ class ProductCompatibilityFrame extends GtkFrame
      */
     public function removeCompatibility()
     {
-        list($model, $iter) = $this->view->get_selection()->get_selected();
+        list($model, $paths) = $this->view->get_selection()->get_selected_rows();
+        $toremove = array();
+        foreach ($paths as $path){
+            $iter = $model->get_iter($path);
+            if (is_object($iter)){
+                $toremove[] = $iter;
+            }else{
+                return false;
+            }
+        }
         
-        if (is_object($iter)){
+        foreach ($toremove as $iter){
             $model->remove($iter);
-        }else{
-            return false;
         }
     }
     

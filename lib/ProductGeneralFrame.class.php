@@ -1,10 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /**
  * Description of ProductGeneralFrame
@@ -62,7 +57,7 @@ class ProductGeneralFrame extends GtkFrame
         $this->notifyLabel = new GtkLabel();
         $this->notifyLabel->set_alignment(0.5, 0.5);
         $id->set_max_length(5);
-        $id->set_size_request(100, -1);
+        $id->set_size_request(120, -1);
         $id->connect('focus-out-event', array($this, '_validateId'));
         $id->connect('key-press-event', array('Main', 'restrictNumbersOnly'));
         
@@ -97,21 +92,21 @@ class ProductGeneralFrame extends GtkFrame
         
         $row = array();
         $row[0] = new GtkHBox();
-        $lcode = new GtkLabel('Código:');
-        $lcode->set_size_request(120, 50);
+        $lcode = new GtkLabel('Código interno:');
+        $lcode->set_size_request(120, -1);
         $lcode->set_alignment(1, 0.5);
         $row[0]->pack_start($lcode, false, false);
         $row[0]->pack_start($id, false, false);
         //$hbox = new GtkHBox;
         $lpart = new GtkLabel('Numero de Parte:');
-        $lpart->set_size_request(120, 50);
+        $lpart->set_size_request(120, -1);
         $lpart->set_alignment(1, 0.5);
         $row[0]->pack_start($lpart, false, false);
         $row[0]->pack_start($partn, false, false);
         
         $row[1] = new GtkHBox;
         $lcond = new GtkLabel('Condición:');
-        $lcond->set_size_request(120, 50);
+        $lcond->set_size_request(120, -1);
         $lcond->set_alignment(1, 0.5);
         $row[1]->pack_start($lcond, false, false);
         $row[1]->pack_start($this->productStateNew, false, false);
@@ -120,10 +115,10 @@ class ProductGeneralFrame extends GtkFrame
         
         $row[2] = new GtkHBox();
         $lcost = new GtkLabel('Costo:');
-        $lcost->set_size_request(120, 50);
+        $lcost->set_size_request(120, -1);
         $lcost->set_alignment(1, 0.5);
         $lprice = new GtkLabel('Precio:');
-        $lprice->set_size_request(120, 50);
+        $lprice->set_size_request(120, -1);
         $lprice->set_alignment(1, 0.5);
         $row[2]->pack_start($lcost, false, false);
         $row[2]->pack_start($cost, false, false);
@@ -133,7 +128,7 @@ class ProductGeneralFrame extends GtkFrame
         
         $row[3] = new GtkHBox;
         $ldesc = new GtkLabel('Descripción:');
-        $ldesc->set_size_request(120, 50);
+        $ldesc->set_size_request(120, 30);
         $ldesc->set_alignment(1, 0.5);
         $row[3]->pack_start($ldesc, false, false);
         $row[3]->pack_start($description);

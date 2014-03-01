@@ -23,7 +23,10 @@ class Main
     
     public static function debug($var)
     {
-        $debug = '[DEBUG]: '.date('Y-m-d H:i:s') . ' ' .gettype($var).':'.print_r($var, true).PHP_EOL;
+        $backtrace = debug_backtrace();
+        $debug = '[DEBUG]: '.date('Y-m-d H:i:s');
+        $debug .= ' '. $backtrace[0]['file'] .':'.$backtrace[0]['line'];
+        $debug .= ' '.gettype($var).':'.print_r($var, true).PHP_EOL;
         print($debug);
     }
     

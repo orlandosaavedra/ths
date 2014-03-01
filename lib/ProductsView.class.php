@@ -11,7 +11,7 @@
  *
  * @author orlando
  */
-class ProductView extends GtkTreeView
+class ProductsView extends GtkTreeView
 {
     
     public $__gsignals = array(
@@ -62,6 +62,7 @@ class ProductView extends GtkTreeView
             $this->append_column($column);
             $column->set_sort_column_id($i);
             
+            
             switch($columnsHeaders[$i]){
                 case 'Precio':
                     $cellrenderer->set_property('xalign', 1);
@@ -71,6 +72,8 @@ class ProductView extends GtkTreeView
                     break;
                 case 'Descripción':
                     $column->set_expand(true);
+                    $column->set_min_width(200);
+                    $column->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
                     break;
             }
         }        
@@ -109,4 +112,4 @@ class ProductView extends GtkTreeView
     }
 }
 
-GObject::register_type('ProductView');
+GObject::register_type('ProductsView');

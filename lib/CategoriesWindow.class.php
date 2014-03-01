@@ -299,6 +299,8 @@ class CategoriesWindow extends GtkWindow
         foreach ($to_remove as $iter){
             $model->remove($iter);
         }
+        
+        $dbm->close();
     }
 
     

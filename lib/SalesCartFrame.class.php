@@ -5,19 +5,45 @@
  * @author orlando
  */
 
-class ProductCartFrame extends GtkFrame
+class SalesCartFrame extends GtkFrame
 {
     /**
      *
      * @var GtkTreeView
      */
-    private $_view;
+    protected $view;
     
     /**
      *
-     * @var GtkLabel
+     * @var GtkEntry
      */
-    public $total;
+    protected $subtotal;
+    /**
+     *
+     * @var GtkEntry
+     */
+    protected $discount;
+    /**
+     *
+     * @var GtkEntry
+     */
+    protected $pdiscount;
+    /**
+     *
+     * @var GtkEntry
+     */
+    protected $net;
+    /**
+     *
+     * @var GtkEntry
+     */
+    protected $tax;
+    
+    /**
+     *
+     * @var GtkEntry
+     */
+    protected $total;
     
     public $__gsignals = array(
         'quote' => array(
@@ -33,13 +59,10 @@ class ProductCartFrame extends GtkFrame
     public function __construct()
     {
         parent::__construct();
-        $this->_createLayout();
+        $this->createLayout();
     }
     
-    /**
-     * Returns a vbox with all the side buttons
-     */
-    private function _createSidePanel()
+    private function createSidePanelButtons()
     {
         $vbox = new GtkVbox();
         $delbtn = new GtkButton('Eliminar');
@@ -58,37 +81,64 @@ class ProductCartFrame extends GtkFrame
         $checkbtn->connect_simple('clicked', array($this, 'emit'), 'sell');
         
         $vbox->pack_start($checkbtn, false, false);
+        return $vbox;
+    }
+    
+    private function createSidePanelEntries()
+    {
+        //Containers
+        $main = new GtkHBox();
+        $labelsColumn = new GtkVbox();
+        $entriesColumn = new GtkVbox();
         
-        $hbox = new GtkHBox(true);
-        $hbox->pack_start(new GtkLabel('Total: '));
-        $hbox->pack_start($this->total = new GtkEntry('0'));
-        $vbox->pack_end($hbox, false, false);
+        $labels = array(
+            'Subtotal', 
+            'Descuento',
+            'Neto',
+            'IVA',
+            'Total');
         
-        $hbox  =new GtkHBox(true);
-        $hbox->pack_start(new GtkLabel('IVA:'));
-        $hbox->pack_start($this->tax = new GtkEntry('0'));
-        $vbox->pack_end($hbox, false, false);
+        foreach ($labels as $label){
+            $wlabel = new GtkLabel($label.':');
+            $wlabel->set_alignment(1, 1);
+            $wlabel->set_size_request(-1, 32);
+            $labelsColumn->pack_start($wlabel, false, false);
+        }
         
-        $hbox = new GtkHBox(true);
-        $hbox->pack_start(new GtkLabel('Neto:'));
-        $hbox->pack_start($this->net = new GtkEntry('0'));
-        $vbox->pack_end($hbox,false,false);
+        $entries =array(
+            $this->subtotal = new GtkEntryNumeric(10),
+            array(
+                $this->pdiscount = new GtkEntryNumeric(2),
+                new GtkLabel('%'),
+                $this->discount = new GtkEntryNumeric(10)
+                ),
+            $this->net = new GtkEntryNumeric(10),
+            $this->tax = new GtkEntryNumeric(10),
+            $this->total = new GtkEntryNumeric(10)
+        );
         
-        $hbox = new GtkHBox(true);
-        $hbox->pack_start(new GtkLabel('Descuento:'));
-        $group = new GtkHBox();
-        $group->pack_start($this->pdiscount = new GtkEntry('0', 2), false, false);
-        $group->pack_start(new GtkLabel('%'));
-        $group->pack_start($this->discount = new GtkEntry('0'));
-        $this->pdiscount->set_size_request(40, -1);
-        $hbox->pack_start($group);
-        $vbox->pack_end($hbox, false, false);
+        foreach ($entries as $entry){
+            if (is_array($entry)){
+                $hbox = new GtkHBox;
+                foreach ($entry as $w){
+                    $hbox->pack_start($w);
+                }
+                $entriesColumn->pack_start($hbox, false, false);
+                continue;
+            }
+            
+            $entriesColumn->pack_start($entry, false, false);
+        }
         
-        $hbox = new GtkHBox(true);
-        $hbox->pack_start(new GtkLabel('Subtotal:'));
-        $hbox->pack_start($this->subtotal = new GtkEntry('0'));
-        $vbox->pack_end($hbox, false, false);
+        $main->pack_start($labelsColumn, false, false);
+        $main->pack_start($entriesColumn, false, false);
+        $this->configureEntries();
+        return $main;
         
+    }
+    
+    private function configureEntries()
+    {
         $this->subtotal->set_alignment(1);
         $this->subtotal->set_editable(false);
         $this->tax->set_alignment(1);
@@ -105,20 +155,30 @@ class ProductCartFrame extends GtkFrame
         $this->net->connect('key-press-event', array('Main', 'restrictNumbersOnly'));
         $this->net->connect_after('key-release-event', array($this, 'recalc'));
         $this->net->set_alignment(1);
-        
+    }
+    /**
+     * Returns a vbox with all the side buttons
+     */
+    private function createSidePanel()
+    {
+        $buttons = $this->createSidePanelButtons();
+        $entries = $this->createSidePanelEntries();
+        $vbox = new GtkVbox();
+        $vbox->pack_start($buttons, false, false);
+        $vbox->pack_end($entries, false, false);
         return $vbox;
     }
     
     /**
      * 
      */
-    private function _createLayout()
+    private function createLayout()
     {
         $vbox = new GtkVBox;
         $hbox = new GtkHBox;
         
         $hbox->pack_start($this->_createListView());        
-        $hbox->pack_start($this->_createSidePanel(), false);
+        $hbox->pack_start($this->createSidePanel(), false);
         
         $this->add($hbox);
     }
@@ -131,19 +191,19 @@ class ProductCartFrame extends GtkFrame
     {
         $data = array();
         
-        $iter = $this->_view->get_model()->iter_children();
+        $iter = $this->view->get_model()->iter_children();
         
         while ($iter != null){
             /* Clear the array */
             $row = array();
+            /* Values */
+            for ($i=0;$i<$this->view->get_model()->get_n_columns();++$i){
+                $row[] = $this->view->get_model()->get_value($iter, $i);
+            }
             /* Add the iter */
             $row[] = $iter;
-            /* Values */
-            for ($i=0;$i<$this->_view->get_model()->get_n_columns();++$i){
-                $row[] = $this->_view->get_model()->get_value($iter, $i);
-            }
             $data[] =$row;
-            $iter =$this->_view->get_model()->iter_next($iter);
+            $iter =$this->view->get_model()->iter_next($iter);
         }
         
         return $data;
@@ -176,13 +236,13 @@ class ProductCartFrame extends GtkFrame
             $changed = $this->pdiscount;
         }
         
-        $model = $this->_view->get_model();
+        $model = $this->view->get_model();
         $iter = $model->iter_children();
         $subtotal = 0;
         
         while ($iter !== null){
-            $q = (int) $model->get_value($iter, 4);
-            $subtotal += (int) $model->get_value($iter, 3) * $q;
+            $q = (int) $model->get_value($iter, 5);
+            $subtotal += (int) $model->get_value($iter, 4) * $q;
             $iter = $model->iter_next($iter);
         }
         
@@ -237,14 +297,14 @@ class ProductCartFrame extends GtkFrame
     public function append(Product $product)
     {
         /* Get the rows data to compare */
-        $model = $this->_view->get_model();
+        $model = $this->view->get_model();
         $iter = $model->get_iter_first();
         
         while ($iter != null){
             $id = $model->get_value($iter, 0);
             if ($id === (integer)$product->id){
-                $nitems = (int)$model->get_value($iter, 4);
-                $model->set($iter, 4, ++$nitems);
+                $nitems = (int)$model->get_value($iter, 5);
+                $model->set($iter, 5, ++$nitems);
                 $this->recalc();
                 return;
             }
@@ -253,7 +313,12 @@ class ProductCartFrame extends GtkFrame
         }
         
         /* At this point no match was found */
-        $data = array($product->id, $product->partnumber, $product->description, $product->price);
+        $data = array(
+            $product->id,
+            $product->partnumber,
+            $product->description,
+            ($product->state===Product::STATE_NEW)? 'Nuevo':'Usado',
+            $product->price);
         $data[] = 1;
         $model->append($data);
         $this->recalc();
@@ -262,7 +327,7 @@ class ProductCartFrame extends GtkFrame
     
     public function delete()
     {
-        list($model, $iter) = $this->_view->get_selection()->get_selected();
+        list($model, $iter) = $this->view->get_selection()->get_selected();
         
         if (!is_object($iter)){
             return false;
@@ -285,18 +350,19 @@ class ProductCartFrame extends GtkFrame
                 GObject::TYPE_LONG,   // id
                 GObject::TYPE_STRING, //PN
                 GObject::TYPE_STRING, //descripcion
+                GObject::TYPE_STRING, //Estado
                 GObject::TYPE_LONG, //precio
                 Gobject::TYPE_LONG //Cantidad
         );
         
-        $this->_view = new GtkTreeView($this->_model);
+        $this->view = new GtkTreeView($this->_model);
         
         foreach ($this->_createColumns() as $column){
-            $this->_view->append_column($column);
+            $this->view->append_column($column);
         }
         
-        $scrwin->add($this->_view);
-        $this->_view->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
+        $scrwin->add($this->view);
+        $this->view->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
         
         return $scrwin;
     }
@@ -312,6 +378,7 @@ class ProductCartFrame extends GtkFrame
             'Código',
             'Numero de parte',
             'Descripción',
+            'Estado',
             'Precio',
             'Cantidad'
         );
@@ -343,7 +410,7 @@ class ProductCartFrame extends GtkFrame
     
     public function edit($cell, $path, $new, $col)
     {
-        $model = $this->_view->get_model();
+        $model = $this->view->get_model();
         $iter = $model->get_iter_from_string($path);
         $model->set($iter, $col, $new);
         $this->recalc();
@@ -351,7 +418,13 @@ class ProductCartFrame extends GtkFrame
     
     public function clear()
     {
-        $this->_view->get_model()->clear();
+        $this->view->get_model()->clear();
+        $this->subtotal->set_text('0');
+        $this->discount->set_text('0');
+        $this->pdiscount->set_text('0');
+        $this->tax->set_text('0');
+        $this->total->set_text('0');
+        $this->net->set_text('0');
     }
     
     public function getTotal()
@@ -360,4 +433,4 @@ class ProductCartFrame extends GtkFrame
     }
 }
 
-GObject::register_type('ProductCartFrame');
+GObject::register_type('SalesCartFrame');

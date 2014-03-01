@@ -15,18 +15,18 @@ class ProductStockFrame extends GtkFrame
     {
         parent::__construct('Stock');
         $model = new THSModel;
-        $vbox = new GtkVbox();
+        $hbox = new GtkHbox();
         $this->set_border_width(3);
-        $this->add($vbox);
+        $this->add($hbox);
         
         foreach ($model->getBranches() as $branch){
-            $hbox = new GtkHBox();
-            $hbox->pack_start($label = new GtkLabel($branch->name), false, false, 10);
+            //$hbox = new GtkHBox();
+            $hbox->pack_start($label = new GtkLabel($branch->name), false, false);
             $label->set_size_request(150, -1);
             $hbox->pack_start($this->stock[$branch->id] = GtkSpinButton::new_with_range(0,99999,1), false, false);
             $this->stock[$branch->id]->set_size_request(60, -1);
             $this->stock[$branch->id]->set_alignment(0.5);
-            $vbox->pack_start($hbox);
+            //$vbox->pack_start($hbox);
         }        
     }
     

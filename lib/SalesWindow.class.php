@@ -5,11 +5,11 @@
  *
  * @author orlando
  */
-class SellsWindow extends GtkWindow
+class SalesWindow extends GtkWindow
 {
     /**
      *
-     * @var ProductCartFrame
+     * @var SalesCartFrame
      */
     public $cart;
     /**
@@ -39,8 +39,7 @@ class SellsWindow extends GtkWindow
         $vbox = new GtkVbox();
         $this->add($vbox);
         
-        $this->cart = new ProductCartFrame();
-        $this->cart = $this->cart;
+        $this->cart = new SalesCartFrame();
         $this->cart->connect('sell', array($this, 'sell'));
         $this->cart->connect('quote', array($this, 'quote'));
 
@@ -63,16 +62,6 @@ class SellsWindow extends GtkWindow
         $this->cart->append($row);
     }
     
-    public function getCartItems()
-    {
-        
-    }
-    
-    public function setSearchResults($data)
-    {
-        
-    }
-    
     /**
      * 
      * @param ProductSearchFrame $frame
@@ -91,7 +80,7 @@ class SellsWindow extends GtkWindow
     
     /**
      * 
-     * @param ProductView $view
+     * @param ProductsView $view
      */
     public function showProductDetail($view)
     {
@@ -112,57 +101,42 @@ class SellsWindow extends GtkWindow
         }
         
         $diag = new GtkDialog(
-                'Confirma',
+                'Confirmar',
                 $this,
                 Gtk::DIALOG_MODAL,
-                array(Gtk::STOCK_YES, Gtk::RESPONSE_YES,
-                    Gtk::STOCK_NO, Gtk::RESPONSE_NO));
+                array(Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
+                    Gtk::STOCK_OK, Gtk::RESPONSE_OK));
         
         $hbox = new GtkHBox();
         $hbox->pack_start(new GtkLabel('Sucursal: '));
-        $cbox = GtkComboBox::new_text();
-        $dbm = new THSModel();
-        $bs = $dbm->getBranches();
-        
-        foreach ($bs as $b){
-            $cbox->append_text($b->name);
-        }
-        
-        $cbox->set_active(0);
+        $cbox = new BranchesComboBox();
+        $cbox->populate();
         $hbox->pack_start($cbox);
         $diag->vbox->add($hbox);
         $diag->show_all();
         
-        switch($diag->run()){
-            case Gtk::RESPONSE_YES:
-                $diag->destroy();
-                $this->doSell($cbox->get_active_text());
-                break;
-            case Gtk::RESPONSE_NO:
-                $diag->destroy();
-                break;
+        $response = $diag->run();
+        $diag->destroy();
+        
+        if ($response===Gtk::RESPONSE_OK){
+            $this->doSell($cbox->getSelected());
         }
     }
     
     public function doSell($branch)
     {
         $dbm = new THSModel();
-        $bs = $dbm->getBranches();
-        $alert = array();
-        
-        foreach ($bs as $b){
-            if ($branch == $b->name){
-                $bid = $b->id;
-            }
-        }
+        $bid = $branch->id;
+        Main::debug($bid);
         
         $products = $this->cart->getProducts();
+        Main::debug($products[0]->qty);
         
         foreach ($products as $product){
             if ($product->stock[$bid] < $product->qty){
                 $alert[] = "{$product->id}: No existe stock suficiente en sucursal";
                 
-                if ($product->stock[0]<$product->qty){
+                if ($product->stock[0] < $product->qty){
                     $alert[] = "{$product->id}: No existe stock suficiente";
                 }else{
                     $alert[] = "{$product->id}: Se utilizará stock de otra sucursal";
@@ -176,14 +150,19 @@ class SellsWindow extends GtkWindow
                     $this,
                     Gtk::DIALOG_MODAL,
                     array(Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                        Gtk::STOCK_YES, Gtk::RESPONSE_YES));
+                    Gtk::STOCK_YES, Gtk::RESPONSE_YES));
+            
+            $alert[] = "¿Desea realizar la venta de todas formas?";
 
             $dialog->vbox->add(new GtkLabel(implode("\n", $alert)));
             $dialog->show_all();
-            $dialog->run();
+            
+            if ($dialog->run()===Gtk::RESPONSE_NO){
+                $dialog->destroy();
+                return;
+            }
+            
             $dialog->destroy();
-            
-            
         }
         
         foreach ($products as $product){
@@ -220,19 +199,26 @@ class SellsWindow extends GtkWindow
         $diag = new GtkFileChooserDialog(
                 'Guardar Cotización',
                 $this,
-                Gtk::DIALOG_MODAL,
+                Gtk::FILE_CHOOSER_ACTION_SAVE,
                 array(Gtk::STOCK_OK, Gtk::RESPONSE_OK,
                       Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL));
+        
+        $diag->set_current_name('cotizacion.pdf');
+        $diag->set_current_folder(__APP__);
+        $diag->set_do_overwrite_confirmation(true);
+        
                 
         if ($diag->run() == Gtk::RESPONSE_OK){
+            
             $products = $this->cart->getProducts();
+            $filename = $diag->get_filename();
             $diag->destroy();
             $dialog = new GtkDialog('Generando cotización', $this, Gtk::DIALOG_MODAL);
             $dialog->vbox->pack_start(new GtkLabel('Porfavor espere...'));
             $dialog->show_all();
             Main::refresh();
             sleep(1);
-            DocumentFactory::generateQuote($products, $diag->get_filename());
+            DocumentFactory::generateQuote($products, $filename);
             $dialog->destroy();
         }else{
             $diag->destroy();

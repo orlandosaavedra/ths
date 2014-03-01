@@ -8,7 +8,7 @@
 class Product 
 {
     const STATE_NEW=1;
-    const STATE_USED=0;
+    const STATE_USED=2;
     const STOCK_TOTAL=0;
     
     public $id=null;
