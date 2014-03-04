@@ -1,30 +1,17 @@
 <?php
 
 $win = new GtkWindow();
-$win->connect_simple('destroy', array('gtk', 'main_quit'));
-$win->set_size_request(600,400);
+$win->set_wmclass('THS', 'THS');
+$win->set_icon_from_file('./img/logo.png');
 
-$btn = new GtkButton('save');
-$win->add($btn);
-
-$btn->connect('clicked', 'save', $win);
-
-function save($btn, $win){
-    $dialog = new GtkFileChooserDialog(
-            'Guardar',
-            $win,
-            Gtk::FILE_CHOOSER_ACTION_SAVE,
-            array(Gtk::STOCK_OK, Gtk::RESPONSE_OK,
-                Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL));
-    $dialog->set_current_folder('/tmp');
-    $dialog->set_current_name('cotizacion.pdf');
-    
-    $dialog->run();
-    
-    echo $dialog->get_filename();
-}
-
+$win2 = new GtkWindow();
+$win2->set_transient_for($win);
+//$win->set_modal(true);
 
 $win->show_all();
+$win2->show_all();
+
+
+$win->connect_simple('destroy', array('gtk','main_quit'));
 
 Gtk::main();

@@ -7,11 +7,28 @@
  */
 class Main
 {  
+    
+    const VERSION = 0.8;
+    /**
+     * 
+     * @param type $var
+     */
+    public static function debug($var)
+    {
+        $backtrace = debug_backtrace();
+        $debug = '[DEBUG]: '.date('Y-m-d H:i:s');
+        $debug .= ' '. $backtrace[0]['file'] .':'.$backtrace[0]['line'];
+        $debug .= ' '.gettype($var).':'.print_r($var, true).PHP_EOL;
+        print($debug);
+    }
+    
     /**
      * Main function
      */
     public function __construct()
-    {    
+    {   
+        //$this->update();
+        
         if ($this->login() === true){
             $win = new MainWindow();
             $win->connect('delete-event', array($this, 'close'));
@@ -21,14 +38,21 @@ class Main
         }        
     }
     
-    public static function debug($var)
+    public function update()
     {
-        $backtrace = debug_backtrace();
-        $debug = '[DEBUG]: '.date('Y-m-d H:i:s');
-        $debug .= ' '. $backtrace[0]['file'] .':'.$backtrace[0]['line'];
-        $debug .= ' '.gettype($var).':'.print_r($var, true).PHP_EOL;
-        print($debug);
+        $check = 'http://thehondastore.no-ip.biz/ths/';
+        $download = 'http://thehondastore.no-ip.biz/ths/download.php';
+        $obj = json_decode(file_get_contents($check));
+        
+        if ($obj->version > self::VERSION){
+            $data = file_get_contents($download);
+            $filename = __APP__.'/setup/'.$obj->filename;
+            file_put_contents($filename, $data);
+            pclose(popen("start /B ".$filename, "r"));
+        }
     }
+    
+    
     
     /**
      * Handles application login

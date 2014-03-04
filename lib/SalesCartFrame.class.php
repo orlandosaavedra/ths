@@ -7,6 +7,20 @@
 
 class SalesCartFrame extends GtkFrame
 {
+    const TOTALS_SUBTOTAL = 0;
+    const TOTALS_PDISCOUNT = 1;
+    const TOTALS_DISCOUNT = 2;
+    const TOTALS_NET = 3;
+    const TOTALS_TAX = 4;
+    const TOTALS_TOTAL = 5;
+    
+    
+    const ROW_PID = 0;
+    const ROW_PN = 1;
+    const ROW_DESC = 2;
+    const ROW_PRICE = 3;
+    const ROW_QTY = 4;
+    const ROW_ITER = 5;
     /**
      *
      * @var GtkTreeView
@@ -76,7 +90,6 @@ class SalesCartFrame extends GtkFrame
         
         $vbox->pack_start($quotebtn, false, false);
         
-        
         $checkbtn = new GtkButton('Realizar Venta');
         $checkbtn->connect_simple('clicked', array($this, 'emit'), 'sell');
         
@@ -88,8 +101,8 @@ class SalesCartFrame extends GtkFrame
     {
         //Containers
         $main = new GtkHBox();
-        $labelsColumn = new GtkVbox();
-        $entriesColumn = new GtkVbox();
+        $labelsColumn = new GtkVbox(true);
+        $entriesColumn = new GtkVbox(true);
         
         $labels = array(
             'Subtotal', 
@@ -100,7 +113,7 @@ class SalesCartFrame extends GtkFrame
         
         foreach ($labels as $label){
             $wlabel = new GtkLabel($label.':');
-            $wlabel->set_alignment(1, 1);
+            $wlabel->set_alignment(1, 0.5);
             $wlabel->set_size_request(-1, 32);
             $labelsColumn->pack_start($wlabel, false, false);
         }
@@ -218,7 +231,7 @@ class SalesCartFrame extends GtkFrame
         $rows = $this->getRows();
         $products = array();
         foreach ($rows as $row){
-            $product = Product::getFromId($row[1]);
+            $product = Product::getFromId($row[0]);
             $product->price = $row[4];
             $product->qty = $row[5];
             $products[] =$product;
@@ -427,9 +440,20 @@ class SalesCartFrame extends GtkFrame
         $this->net->set_text('0');
     }
     
-    public function getTotal()
+    /**
+     * 
+     * @return array 
+     */
+    public function getTotals()
     {
-        return $this->total->get_text();
+        $totals = array();
+        $totals[self::TOTALS_SUBTOTAL] = $this->subtotal->get_text();
+        $totals[self::TOTALS_PDISCOUNT] = $this->pdiscount->get_text();
+        $totals[self::TOTALS_DISCOUNT] = $this->discount->get_text();
+        $totals[self::TOTALS_NET] = $this->net->get_text();
+        $totals[self::TOTALS_TAX] = $this->discount->get_text();
+        $totals[self::TOTALS_TOTAL] = $this->discount->get_text();
+        return $totals;
     }
 }
 

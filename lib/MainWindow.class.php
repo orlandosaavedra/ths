@@ -32,8 +32,8 @@ class MainWindow extends GtkWindow
     {
         parent::__construct();
         $this->_build();
-        $this->set_icon_from_file(__DIR__ . '/../img/logo.png');
-        $this->set_wmclass('THS', 'THS');
+        $this->set_icon_from_file(__APPDIR__ . '/img/logo.png');
+        $this->set_wmclass('The Honda Store', 'Principal');
     }
     
     /**
@@ -82,7 +82,9 @@ class MainWindow extends GtkWindow
     public function sells()
     {
         $sell = new SalesWindow();
+        $sell->set_wmclass(__APP__, 'Venta');   
         $sell->set_transient_for($this);
+        $sell->set_modal(true);
         $sell->show_all();
     }
     

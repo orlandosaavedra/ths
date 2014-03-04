@@ -46,6 +46,7 @@ class THSModel extends MySqli
             case 1045:
                 throw new Exception('Acceso denegado');
                 break;
+            case 2002:
             case 2003:
                 throw new Exception('No se pudo conectar');
                 break;
@@ -154,7 +155,7 @@ class THSModel extends MySqli
              . " `description`, `cost`, `price`, `category_id`)"
              . " VALUES "
              . "({$id}, {$partnumber}, {$product->state},"
-             . " '{$description}', {$cost}, {$price}, {$category})";
+             . " '{$description}', {$cost}, {$price}, {$category->id})";
          echo $sql.PHP_EOL;       
         $this->query($sql);
                 
@@ -641,9 +642,9 @@ class THSModel extends MySqli
     {
         
         $date = date('Y-m-d H:i:s');
-        $total = $productCart->getTotal();
+        $total = $productCart->getTotals();
         $sql = "INSERT INTO sale (date, employee_id, branch_id, total) VALUES "
-                . "('$date', '$employee_id', '$branch_id', $total)";
+                . "('$date', '$employee_id', '$branch_id', {$total[SalesCartFrame::TOTAL_NET]})";
         $this->query($sql);
         Main::debug($this->error);
         

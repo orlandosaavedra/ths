@@ -27,10 +27,7 @@ class SalesWindow extends GtkWindow
     private function _build()
     {
         $this->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
-        $this->set_resizable(false);
-        $this->set_title('The Honda Store - Venta');
-        //$this->set_keep_above(true);
-        $this->set_modal(true);
+        $this->set_title(__APP__ .' - Venta');
         $this->search = new ProductSearchFrame();
         $this->search->view->connect('rightclick', array($this, 'showProductDetail'));
         $this->search->connect('search', array($this, 'search'));
@@ -45,9 +42,6 @@ class SalesWindow extends GtkWindow
 
         $vbox->pack_start($this->search);
         $vbox->pack_start($this->cart);
-        $this->set_size_request(1024,768);
-        
-        $this->show_all();
     }
     
     public function addToCart()
@@ -128,6 +122,7 @@ class SalesWindow extends GtkWindow
         $dbm = new THSModel();
         $bid = $branch->id;
         Main::debug($bid);
+        $alert = array();
         
         $products = $this->cart->getProducts();
         Main::debug($products[0]->qty);
@@ -196,6 +191,12 @@ class SalesWindow extends GtkWindow
     
     public function quote()
     {
+        //If cart is empty do nothing
+        if ($this->cart->getRows() == null){
+            return; 
+        }
+        
+        // Show dialog to choose where to save the file
         $diag = new GtkFileChooserDialog(
                 'Guardar Cotización',
                 $this,
@@ -204,13 +205,11 @@ class SalesWindow extends GtkWindow
                       Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL));
         
         $diag->set_current_name('cotizacion.pdf');
-        $diag->set_current_folder(__APP__);
+        $diag->set_current_folder($_SERVER['HOMEPATH']);
         $diag->set_do_overwrite_confirmation(true);
-        
                 
         if ($diag->run() == Gtk::RESPONSE_OK){
             
-            $products = $this->cart->getProducts();
             $filename = $diag->get_filename();
             $diag->destroy();
             $dialog = new GtkDialog('Generando cotización', $this, Gtk::DIALOG_MODAL);
@@ -218,7 +217,7 @@ class SalesWindow extends GtkWindow
             $dialog->show_all();
             Main::refresh();
             sleep(1);
-            DocumentFactory::generateQuote($products, $filename);
+            DocumentFactory::generateQuote($this->cart, $filename);
             $dialog->destroy();
         }else{
             $diag->destroy();

@@ -56,7 +56,7 @@ class ProductGeneralFrame extends GtkFrame
         $this->productId = $id = new GtkEntry();
         $this->notifyLabel = new GtkLabel();
         $this->notifyLabel->set_alignment(0.5, 0.5);
-        $id->set_max_length(5);
+        $id->set_max_length(10);
         $id->set_size_request(120, -1);
         $id->connect('focus-out-event', array($this, '_validateId'));
         $id->connect('key-press-event', array('Main', 'restrictNumbersOnly'));

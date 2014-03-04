@@ -97,7 +97,7 @@ class ProductCreateWindow extends GtkWindow
         $dbm = new THSModel;
         
         $product = $this->general->getProduct();
-        $product->category = $this->category->getSelectedCategory();
+        $product->category_id = $this->category->getSelectedCategory();
         $id = $dbm->createProduct($product);
         
         if (!$id){
