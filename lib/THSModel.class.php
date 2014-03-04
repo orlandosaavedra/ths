@@ -44,11 +44,11 @@ class THSModel extends MySqli
         switch ($this->connect_errno){
             case 1044:
             case 1045:
-                throw new Exception('Acceso denegado');
+                throw new Exception('Acceso denegado a la base de datos');
                 break;
             case 2002:
             case 2003:
-                throw new Exception('No se pudo conectar');
+                throw new Exception('No se pudo conectar a la base de datos');
                 break;
             case 1049:
                 throw new Exception('No existe la base de datos');

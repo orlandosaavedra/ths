@@ -167,22 +167,17 @@ class Main
     
     public function handleException(Exception $e)
     {
-        $diag = new GtkDialog(
-                    'Error',
-                    null,
-                    Gtk::DIALOG_MODAL,
-                    array(Gtk::STOCK_OK, Gtk::RESPONSE_OK)
-                    );
-        $lerrorImage = GtkImage::new_from_icon_name(Gtk::STOCK_DIALOG_ERROR, GTK::ICON_SIZE_BUTTON);
-        $rerrorImage = GtkImage::new_from_icon_name(Gtk::STOCK_DIALOG_ERROR, Gtk::ICON_SIZE_BUTTON);
-        $hbox = new GtkHBox;
-        $hbox->pack_start($lerrorImage, false, false);
-        $hbox->pack_start(new GtkLabel($e->getMessage()));
-        $hbox->pack_start($rerrorImage, false, false);
-        $diag->vbox->pack_start($hbox);
-        $diag->show_all();
+        
+        $diag = new GtkMessageDialog(
+                null,
+                0,
+                Gtk::MESSAGE_ERROR,
+                Gtk::BUTTONS_OK,
+                $e->getMessage());
+        
         $diag->run();
-        exit(1);
+        $diag->destroy();
+        exit($e->getMessage());
         
     }
     

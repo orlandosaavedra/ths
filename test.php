@@ -1,17 +1,18 @@
 <?php
 
-$win = new GtkWindow();
-$win->set_wmclass('THS', 'THS');
-$win->set_icon_from_file('./img/logo.png');
+$ids = Gtk::stock_list_ids();
 
-$win2 = new GtkWindow();
-$win2->set_transient_for($win);
-//$win->set_modal(true);
-
-$win->show_all();
-$win2->show_all();
-
-
-$win->connect_simple('destroy', array('gtk','main_quit'));
-
-Gtk::main();
+foreach ($ids as $id){
+    $const = str_replace('gtk-', '',$id);
+    $const = str_replace('-','_', $const);
+    $const = strtoupper($const);
+    
+    $const = $const;
+    
+    if (defined('Gtk::'.$const)){
+        if (is_string(constant('Gtk::'.$const)))
+            echo 'const '. $const. '=\''.constant('Gtk::'.$const).'\';'.PHP_EOL;
+        else
+            echo 'const '. $const. '='.constant('Gtk::'.$const).';'.PHP_EOL;
+    }
+}
