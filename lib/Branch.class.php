@@ -24,9 +24,9 @@ class Branch
      */
     public static function retrieve($bid)
     {
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         $branch = $dbm->getBranch($bid);
-        $dbm->close();
+        //$dbm->close();
         return $branch;
     }
 }

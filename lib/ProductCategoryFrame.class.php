@@ -17,7 +17,7 @@ class ProductCategoryFrame extends GtkFrame
     );
     /**
      *
-     * @var CategoriesComboBox
+     * @var ProductCategoryComboBox
      */
     public $combo;
     
@@ -25,7 +25,7 @@ class ProductCategoryFrame extends GtkFrame
     {
         parent::__construct('Categoria');
         $this->set_border_width(3);
-        $this->combo = new CategoriesComboBox;
+        $this->combo = new ProductCategoryComboBox();
         $this->connect_simple('lock', array($this->combo, 'set_sensitive'), false);
         
         $confbtn = new GtkButton('');
@@ -33,7 +33,7 @@ class ProductCategoryFrame extends GtkFrame
         $label = $confbtn->get_child();
         $label->destroy();
         $confbtn->add($image);
-        $confbtn->connect_simple('clicked', array($this, 'modifyCategories'));
+        $confbtn->connect_simple('clicked', array($this, 'options'));
         
         $vbox = new GtkVbox();
         $hbox = new GtkHBox;
@@ -47,19 +47,21 @@ class ProductCategoryFrame extends GtkFrame
         $this->populate();
     }
     
-    public function modifyCategories()
+    public function options()
     {
-        $win = new CategoriesWindow(CategoriesWindow::CATEGORY_FRAME);
+        $win = new CategoriesWindow();
         $win->set_transient_for($this->get_toplevel());
         $win->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
         $win->set_modal(true);
+        $win->set_icon_from_file(THS_LOGO_FILENAME);
+        $win->set_default_size(200, 200);
         $win->connect_simple('destroy', array($this, 'populate'));
         $win->show_all();
     }
     
     public function populate()
     {
-        $this->combo->populate();
+        $this->combo->fetch();
     }
     
     /**
@@ -68,8 +70,6 @@ class ProductCategoryFrame extends GtkFrame
      */
     public function getSelectedCategory()
     {
-        $dbm = new THSModel();
-        $available = $dbm->getProductCategories();
         $selected = $this->combo->getActive();
         return $selected;
     }

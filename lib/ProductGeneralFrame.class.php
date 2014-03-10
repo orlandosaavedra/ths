@@ -47,29 +47,30 @@ class ProductGeneralFrame extends GtkFrame
     
     protected $blockexistent = true;
     
-    protected $notifyLabel = null;
+    //protected $notifyLabel = null;
 
     public function __construct()
     {
         parent::__construct('General');
         $this->set_border_width(3);
         $this->productId = $id = new GtkEntry();
-        $this->notifyLabel = new GtkLabel();
-        $this->notifyLabel->set_alignment(0.5, 0.5);
+        //$this->notifyLabel = new GtkLabel();
+        //$this->notifyLabel->set_alignment(0.5, 0.5);
         $id->set_max_length(10);
         $id->set_size_request(120, -1);
-        $id->connect('focus-out-event', array($this, '_validateId'));
+        $id->connect('focus-out-event', array($this, 'validateId'));
         $id->connect('key-press-event', array('Main', 'restrictNumbersOnly'));
         
         $this->productPartnumber = $partn = new GtkEntry();
         $partn->set_max_length(50);
         $partn->set_size_request(200, -1);
-        $partn->connect('focus-out-event', array($this, '_validateExistence'));
+        $partn->connect('focus-out-event', array($this, 'validateExistence'));
         
         $this->productStateNew = null;
         $this->productStateNew = new GtkRadioButton($this->productStateNew, 'Nuevo');
         $this->productStateUsed= new GtkRadioButton($this->productStateNew, 'Usado');
-        $this->productStateNew->connect_simple('toggled', array($this, '_validateExistence'), $partn);
+        //$this->productStateNew->connect_simple('focus-out-event', array($this, 'validateExistence'), $partn);
+        $this->productStateNew->connect_simple('toggled', array($this, 'validateExistence'), $partn);
         $this->productCost = $cost = GtkSpinButton::new_with_range(0, 9999999999, 1000);
         $this->productPrice = $price = GtkSpinButton::new_with_range(0, 9999999999, 1000);
         $this->productDescription = $description = new GtkEntry();
@@ -88,7 +89,7 @@ class ProductGeneralFrame extends GtkFrame
         $vbox = new GtkVBox();
         $this->add($vbox);
         
-        $vbox->pack_start($this->notifyLabel);
+        //$vbox->pack_start($this->notifyLabel);
         
         $row = array();
         $row[0] = new GtkHBox();
@@ -143,35 +144,44 @@ class ProductGeneralFrame extends GtkFrame
      * 
      * @param GtkEntry $entry
      */
-    public function _validateId(GtkEntry $entry)
+    public function validateId(GtkEntry $entry)
     {        
         if (!$this->blockexistent){
             return false;
         }
         
         $dbm = new THSModel;
+        
         if ($dbm->getProduct($entry->get_text())){
-            $entry->grab_focus();
             $this->notify('Codigo de producto ya existe');
-        }else{
-            $this->notify('');
+            $entry->set_text('');
+            $entry->grab_focus();
         }
+        
+        //$dbm->close();
+        return false;
     }
     
     public function notify($msg)    
     {
-        $this->notifyLabel->set_markup('<span color="red">'.$msg.'</span>');
+        $dialog = new GtkMessageDialog(
+                $this->get_toplevel(),
+                0,
+                Gtk::MESSAGE_ERROR,
+                Gtk::BUTTONS_OK,
+                $msg);
+        $dialog->run();
+        $dialog->destroy();
+        //$this->notifyLabel->set_markup('<span color="red">'.$msg.'</span>');
     }
     
-    public function _validateExistence(GtkEntry $entry)
+    public function validateExistence(GtkEntry $entry)
     {
-        
-        echo 'Validating'.PHP_EOL;
         if (!$this->blockexistent){
             return false;
         }
         
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         $pn = trim($this->productPartnumber->get_text());
         
         if ($pn == null){
@@ -189,12 +199,31 @@ class ProductGeneralFrame extends GtkFrame
         }
         
         $result = $dbm->query($sql);
-        echo $sql.PHP_EOL;
+        
+        Main::debug($dbm->error);
+        
+        //$dbm->close();
+        
         if ($result->num_rows){
-            $this->notify('El numero de parte ya existe con la misma condición');
-        }else{
-            $this->notify('');        
+            if ($state == Product::STATE_NEW && $this->productStateUsed->get_sensitive() == true){
+                $this->productStateNew->set_sensitive(false);
+                $this->productStateUsed->set_active(true);
+                
+            }else if ($state == Product::STATE_USED && $this->productStateNew->get_sensitive() == true){
+                $this->productStateUsed->set_sensitive(false);
+                $this->productStateNew->set_active(true);
+                
+            }else {
+                $this->notify('El numero de parte ya existe USADO y NUEVO');
+                $this->productStateNew->set_sensitive(true);
+                $this->productStateUsed->set_sensitive(true);
+                $this->productPartnumber->set_text('');
+                
+            }
             
+        }else{
+            $this->productStateNew->set_sensitive(true);
+            $this->productStateUsed->set_sensitive(true);
         }
         
         return false;

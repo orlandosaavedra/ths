@@ -1,11 +1,4 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of SearchWindow
  *
@@ -15,7 +8,7 @@ final class ProductSearchFrame extends GtkFrame
 {
     /**
      *
-     * @var ProductsView
+     * @var ProductListView
      */
     public $view;
     
@@ -38,10 +31,20 @@ final class ProductSearchFrame extends GtkFrame
     
     /**
      *
-     * @var ProductCompatibilityFrame
+     * @var ProductCompatibilityFilterPanel
      */
     public $compatibility;
     
+    /**
+     *
+     * @var ProductCategoryComboBox
+     */
+    public $category;
+    
+    /**
+     *
+     * @var array
+     */
     public $__gsignals = array(
         'search' => array(
             GObject::SIGNAL_RUN_LAST,
@@ -50,26 +53,30 @@ final class ProductSearchFrame extends GtkFrame
         'activated' => array(
             GObject::SIGNAL_RUN_LAST,
             GObject::TYPE_BOOLEAN,
-            array(GObject::TYPE_LONG, GtkRequisition::gtype))
-        
-    );
+            array(GObject::TYPE_LONG, GtkRequisition::gtype)),
+        'view-right-click'=>array(
+            GObject::SIGNAL_RUN_LAST,
+            GObject::TYPE_BOOLEAN,
+            array(GOBject::TYPE_LONG, GtkRequisition::gtype))
+        );
     
     public function __construct()
     {
         parent::__construct();
-        $this->_build();
-        $this->_connect();
+        $this->build();
+        $this->doConnect();
     }
     
-    private function _build()
+    protected function build()
     {
         $this->_buildEntryButtons();
         
-        $this->compatibility = new ProductCompatibilityFrame(false);
+        $this->compatibility = new ProductCompatibilityFilterPanel();
+        $this->category = new ProductCategoryComboBox();
+        $this->category->fetch();
         
         $this->_buildListView();
-        $this->_buildLayout();
-        
+        $this->pack();
     }
     
     /**
@@ -79,18 +86,26 @@ final class ProductSearchFrame extends GtkFrame
     public function getSelected()
     {
         list ($model, $iter) = $this->view->get_selection()->get_selected();
-        echo 'VALUE: ' .$model->get_value($iter, 0).PHP_EOL;
         $row = Product::getFromId($model->get_value($iter, 0));
         return $row;
     }
     
-    private function _connect()
+    protected function doConnect()
     {
         $this->view->connect_simple('row-activated', array($this, 'emit'), 'activated');
         $this->searchButton->connect_simple('clicked', array($this, 'emit'), 'search');
+        $rcfunc = function($view, $event, $frame){
+            if ($event->button===3){
+                $frame->emit('view-right-click');
+            }
+            
+            return false;
+        };
+        
+        $this->view->connect('button-press-event', $rcfunc, $this);
     }
     
-    private function _buildLayout()
+    protected function pack()
     {
         $hbox=new GtkHBox;
         $vbox=new GtkVBox;
@@ -102,6 +117,7 @@ final class ProductSearchFrame extends GtkFrame
         
         $vbox->pack_start($hbox, false, false, false);
         $vbox->pack_start($this->compatibility, false, false);
+        $vbox->pack_start($this->category, false, false);
         $vbox->pack_start($this->_scrwin);
 
     }
@@ -114,32 +130,12 @@ final class ProductSearchFrame extends GtkFrame
         
     }
     
-    
-    public function setYear($combo)
-    {
-        $this->yearCombo->get_model()->clear();
-        $dbl = new THSModel();
-        $result = $dbl->query ("SELECT DISTINCT `year` FROM `vehicle` WHERE "
-                . "`model`='{$combo->get_active_text()}' ORDER BY `year` ASC");
-        echo $dbl->error;
-        
-        if ($result->num_rows){
-            $this->yearCombo->append_text('');
-        }
-        
-        while($obj = $result->fetch_object()){
-            $this->yearCombo->append_text($obj->year);
-        }
-        
-        
-    }
-    
     private function _buildListView()
     {
         $scrwin = new GtkScrolledWindow();
         $scrwin->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
         
-        $this->view = new ProductsView();
+        $this->view = new ProductListView();
         $scrwin->add($this->view);
         
         $this->_scrwin = $scrwin;
@@ -156,7 +152,7 @@ final class ProductSearchFrame extends GtkFrame
     
     public function appendResult(Product $product)
     {
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         //$stock = $dbm->getProductStock($product->id);
         $model = $this->view->get_model();
         $data = array(

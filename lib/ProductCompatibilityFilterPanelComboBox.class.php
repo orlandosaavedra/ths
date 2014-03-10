@@ -5,7 +5,7 @@
  *
  * @author orlando
  */
-class CompatibilityFilterComboBox extends GtkComboBox
+class ProductCompatibilityFilterPanelComboBox extends GtkComboBox
 {
     const MATCH_ALL = 'TODOS';
     
@@ -36,7 +36,7 @@ class CompatibilityFilterComboBox extends GtkComboBox
             return true;
         }else{
             $this->emit('on-select');
-            return true;
+            return false;
         }
     }
     
@@ -45,9 +45,16 @@ class CompatibilityFilterComboBox extends GtkComboBox
         $this->set_sensitive(true);
         $model = $this->get_model();
         $model->clear();
-        $model->append(array(CompatibilityFilterComboBox::MATCH_ALL));
-        foreach ($data as $row){
-            $model->append(array($row));
+        
+        if (null != $data){
+            foreach ($data as $row){
+                if ($row===null){
+                    //$row = ProductCompatibility::MATCH_ALL;
+                }
+                $model->append(array($row));
+            }
+        }else{
+            //$model->append(array(ProductCompatibility::MATCH_ALL));
         }
     }
     
@@ -58,8 +65,10 @@ class CompatibilityFilterComboBox extends GtkComboBox
         $this->set_sensitive(false);
     }
     
+    
     public function get_active_text()
     {
+        //return parent::get_active_text();
         $model = $this->get_model();
         $iter = $this->get_active_iter();
         if ($iter === null){
@@ -70,4 +79,4 @@ class CompatibilityFilterComboBox extends GtkComboBox
     }
 }
 
-Gobject::register_type('CompatibilityFilterComboBox');
+Gobject::register_type('ProductCompatibilityFilterPanelComboBox');

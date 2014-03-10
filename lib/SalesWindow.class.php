@@ -29,7 +29,7 @@ class SalesWindow extends GtkWindow
         $this->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
         $this->set_title(__APP__ .' - Venta');
         $this->search = new ProductSearchFrame();
-        $this->search->view->connect('rightclick', array($this, 'showProductDetail'));
+        $this->search->view->connect('right-click', array($this, 'showContextMenu'));
         $this->search->connect('search', array($this, 'search'));
         $this->search->connect_simple('activated', array($this, 'addToCart'));
         
@@ -63,28 +63,50 @@ class SalesWindow extends GtkWindow
     public function search($frame)
     {
         $frame->clear();
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         
-        $results = $dbm->searchProduct($frame->getSearch(), $frame->compatibility->getCompatibility());
+        $str = $frame->getSearch();
+        $pc = $frame->compatibility->getActiveFilter();
+        $cat = $frame->category->getActive();
+        
+        $results = $dbm->searchProduct($str, $pc, $cat);
         
         foreach($results as $pid){
             $frame->appendResult(Product::getFromId($pid));
         }
     }
     
+    public function showContextMenu()
+    {
+        $menu = new GtkMenu();
+        $menuItem = new GtkMenuItem('Ver detalles');
+        $menuItem->connect_simple('activate', array($this, 'showProductDetail'));
+        $menu->append($menuItem);
+        
+        
+        $menuItem = new GtkMenuItem('Agregar al carro');
+        $menuItem->connect_simple('activate', array($this, 'addToCart'));
+        $menu->append($menuItem);
+        
+        $menu->show_all();
+        $menu->popup();
+        
+    }
+    
     /**
      * 
-     * @param ProductsView $view
+     * @param ProductListView $view
      */
-    public function showProductDetail($view)
+    public function showProductDetail()
     {
-        $product = $view->getSelected();
+        $product = $this->search->view->getSelected();
         if ($product){
             $win = new ProductModifyWindow($product->id);
-            $win->lock();
+            $win->set_title('Detalles del producto');
             $win->set_transient_for($this);
             $win->set_modal(true);
             $win->show_all();
+            $win->lock();
         }
     }
     
@@ -119,7 +141,7 @@ class SalesWindow extends GtkWindow
     
     public function doSell($branch)
     {
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         $bid = $branch->id;
         Main::debug($bid);
         $alert = array();
@@ -196,33 +218,21 @@ class SalesWindow extends GtkWindow
             return; 
         }
         
-        // Show dialog to choose where to save the file
-        $diag = new GtkFileChooserDialog(
-                'Guardar Cotización',
-                $this,
-                Gtk::FILE_CHOOSER_ACTION_SAVE,
-                array(Gtk::STOCK_OK, Gtk::RESPONSE_OK,
-                      Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL));
+        $filename = __APPDIR__ . DIRECTORY_SEPARATOR . 'img'.DIRECTORY_SEPARATOR .'cotiza.pdf';
+        $dialog = new GtkDialog('Generando cotización', $this, Gtk::DIALOG_MODAL);
+        $dialog->vbox->pack_start(new GtkLabel('Porfavor espere...'));
+        $dialog->show_all();
+        Main::refresh();
+        DocumentFactory::generateQuote($this->cart, $filename);
+        //Open the resulting PDF
+        if (strstr(strtolower((PHP_OS)), 'win')){
+            exec("start /B $filename");
+        }else if (strstr(PHP_OS, 'Linux')){
+            exec("xdg-open $filename");
+        }
         
-        $diag->set_current_name('cotizacion.pdf');
-        $diag->set_current_folder($_SERVER['HOMEPATH']);
-        $diag->set_do_overwrite_confirmation(true);
-                
-        if ($diag->run() == Gtk::RESPONSE_OK){
-            
-            $filename = $diag->get_filename();
-            $diag->destroy();
-            $dialog = new GtkDialog('Generando cotización', $this, Gtk::DIALOG_MODAL);
-            $dialog->vbox->pack_start(new GtkLabel('Porfavor espere...'));
-            $dialog->show_all();
-            Main::refresh();
-            sleep(1);
-            DocumentFactory::generateQuote($this->cart, $filename);
-            $dialog->destroy();
-        }else{
-            $diag->destroy();
-            return;
-        }        
+        $dialog->destroy();        
+        
     }
 }
 

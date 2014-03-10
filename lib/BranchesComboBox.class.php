@@ -27,9 +27,9 @@ class BranchesComboBox extends GtkComboBox
         $model = $this->get_model();
         $model->clear();
         
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         $branches = $dbm->getBranches();
-        $dbm->close();
+        //$dbm->close();
         
         foreach ($branches as $branch){
             $model->append(array($branch->id, $branch->name));

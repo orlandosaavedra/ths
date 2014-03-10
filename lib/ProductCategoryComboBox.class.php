@@ -1,17 +1,10 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of CategoriesComboBox
  *
  * @author orlando
  */
-class CategoriesComboBox extends GtkComboBox
+class ProductCategoryComboBox extends GtkComboBox
 {
     public function __construct()
     {
@@ -22,9 +15,9 @@ class CategoriesComboBox extends GtkComboBox
         $this->set_attributes($cellr, 'text', 1);
     }
     
-    public function populate()
+    public function fetch()
     {
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         $categories = $dbm->getProductCategories();
         $model = $this->get_model();
         $model->clear();

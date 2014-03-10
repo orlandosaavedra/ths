@@ -29,7 +29,7 @@ class DocumentFactory
         $doc->SetFont('Arial', '', 12);
         $doc->Cell(0, 5, 'http://www.desarmahonda.cl',0,1,'C');
         $doc->Ln();
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         $branches = $dbm->getBranches();
         
         $doc->Cell(40,5);
@@ -104,10 +104,10 @@ class DocumentFactory
         
     }
     
-    public static function generateStockList($branch, $path)
+    public static function generateAvailableStockList($plist, $branch, $path)
     {
         $fpdf = new fpdf('P', 'mm', 'Letter');
-        $fpdf->setFont('Arial', '', 12);
+        $fpdf->setFont('Arial', '', 10);
         $fpdf->AddPage();
         $branchdesc = 'Sucursal: ('.$branch->id.')'.$branch->name;
         $fpdf->Cell(0, 10, 'Listado de stock disponible', 0, 1, 'C');
@@ -116,24 +116,26 @@ class DocumentFactory
         $fpdf->Line(10, 42, 205, 42);
         $fpdf->Ln();
         $fpdf->Cell(20, 8, 'Codigo', 1, 0, 'C');
-        $fpdf->Cell(40, 8, 'Numero de Parte', 1, 0, 'C');
+        $fpdf->Cell(30, 8, 'Numero de Parte', 1, 0, 'C');
         $fpdf->Cell(80, 8, iconv('UTF8', 'cp1252','Descripción'), 1, 0, 'C');
         $fpdf->Cell(20, 8, 'Estado', 1, 0, 'C');
         $fpdf->Cell(20, 8, 'Precio', 1, 0, 'C');
-        $fpdf->Cell(15, 8, 'Stock', 1, 1, 'C');
+        $fpdf->Cell(15, 8, 'Stock', 1, 0, 'C');
+        $fpdf->Cell(15, 8, 'Real', 1, 1);
         
         foreach ($plist as $pid){
             $product = Product::getFromId($pid);
             $fpdf->Cell(20, 8, $product->id, 1, 0, 'C');
-            $fpdf->Cell(50, 8, $product->partnumber, 1, 0, 'C');
-            $fpdf->Cell(80, 8, $product->description, 1, 0, 'L');
+            $fpdf->Cell(30, 8, $product->partnumber, 1, 0, 'C');
+            $fpdf->Cell(80, 8, iconv('UTF8', 'cp1252',$product->description), 1, 0, 'L');
             $state = ($product->state==Product::STATE_NEW)? 'Nuevo':'Usado';
             $fpdf->Cell(20, 8, $state, 1, 0, 'C');
             $fpdf->Cell(20, 8, $product->price, 1, 0, 'R');
-            $fpdf->Cell(15, 8, $product->stock[$branch->id], 1, 1, 'C');
+            $fpdf->Cell(15, 8, $product->stock[$branch->id], 1, 0, 'C');
+            $fpdf->Cell(15, 8, '', 1, 1, 'C');
         }
         
-        $fpdf->Output('/tmp/export.pdf', 'F');
+        $fpdf->Output($path, 'F');
     }
 }
 /*

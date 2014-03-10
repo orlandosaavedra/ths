@@ -11,11 +11,11 @@
  *
  * @author orlando
  */
-class ProductsView extends GtkTreeView
+class ProductListView extends GtkTreeView
 {
     
     public $__gsignals = array(
-        'rightclick' => array(
+        'right-click' => array(
             GObject::SIGNAL_RUN_LAST,
             GObject::TYPE_BOOLEAN,
             array(GObject::TYPE_LONG, GtkRequisition::gtype))
@@ -82,7 +82,7 @@ class ProductsView extends GtkTreeView
     public function onButton($view, $event)
     {
         if ($event->button == 3){
-            $this->emit('rightclick');
+            $this->emit('right-click');
         }     
         
         return false;
@@ -112,4 +112,4 @@ class ProductsView extends GtkTreeView
     }
 }
 
-GObject::register_type('ProductsView');
+GObject::register_type('ProductListView');

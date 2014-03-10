@@ -47,7 +47,7 @@ class MainWindow extends GtkWindow
         $mainButtons=array(
             $products = new GtkButton('Productos'),
             $sells = new GtkButton('Venta'),
-            $categories = new GtkButton('Categorias/Vehiculos'),
+            //$categories = new GtkButton('Categorias/Compatibilidades'),
             $management = new GtkButton('Administración'),
         );
         
@@ -58,7 +58,7 @@ class MainWindow extends GtkWindow
         
         $sells->connect_simple('clicked', array($this, 'sells'));
         $products->connect_simple('clicked', array($this, 'products'));
-        $categories->connect_simple('clicked', array($this, 'categories'));
+        //$categories->connect_simple('clicked', array($this, 'categories'));
         $management->connect_simple('clicked', array($this, 'management'));
         
         $vbox->pack_start(new GtkLabel(''), true, true, true);
@@ -68,7 +68,7 @@ class MainWindow extends GtkWindow
         $hbox->pack_start($sells);
         $vbox->pack_start($hbox);
         $hbox = new GtkHBox(true);
-        $hbox->pack_start($categories);
+        //$hbox->pack_start($categories);
         $hbox->pack_start($management);
         $vbox->pack_start($hbox); 
         $vbox->pack_start(new GtkLabel(''), true, true, true);
@@ -85,6 +85,7 @@ class MainWindow extends GtkWindow
         $sell->set_wmclass(__APP__, 'Venta');   
         $sell->set_transient_for($this);
         $sell->set_modal(true);
+        $sell->set_default_size(1024, 768);
         $sell->show_all();
     }
     
@@ -93,6 +94,26 @@ class MainWindow extends GtkWindow
      */
     public function products()
     {
+        $dialog = new GtkDialog('Operaciones de Producto', $this, Gtk::DIALOG_MODAL, array());
+        $vbox = $dialog->vbox;
+        
+        $create = new GtkButton('Crear');
+        $modify = new GtkButton('Modificar');
+        $stock = new GtkButton('Stock');
+        
+        $create->connect_simple('clicked', array($this, 'createProduct'), $dialog);
+        $modify->connect_simple('clicked', array($this, 'searchToModify'), $dialog);
+        $stock->connect_simple('clicked', array($this, 'productsStock'), $dialog);
+        
+        $hbox = new GtkHBox(true);
+        $hbox->pack_start($create);
+        $hbox->pack_start($modify);
+        $hbox->pack_start($stock);
+        $vbox->add($hbox);
+        
+        
+        $dialog->show_all();
+         /**
         $income = new ProductsWindow();
         $income->set_transient_for($this);
         $income->set_modal(true);
@@ -101,6 +122,9 @@ class MainWindow extends GtkWindow
         $income->connect('stock', array($this, 'productsStock'));
         //$income->connect()
         $income->show_all();
+          * 
+          * @param type $income
+          */
     }
     
     public function productsStock($income)
@@ -129,6 +153,8 @@ class MainWindow extends GtkWindow
         $create = new ProductCreateWindow();
         $create->set_transient_for($this);
         $create->set_modal(true);
+        $create->set_default_size(-1, 768);
+        $create->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
         $create->show_all();
     }
     

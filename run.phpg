@@ -1,3 +1,5 @@
+#!/usr/bin/php -c/etc/php5/gtk/php.ini
+
 <?php
 /**
  * Main file

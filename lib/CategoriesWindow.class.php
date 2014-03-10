@@ -1,110 +1,81 @@
 <?php
 /**
- * Description of CreateProductCategoryWindow
+ * Description of CategoriesWindow
  *
  * @author orlando
  */
 class CategoriesWindow extends GtkWindow
 {
-    const CATEGORY_FRAME=1;
-    const VEHICLE_FRAME=2;
-    const BOTH_FRAME=3;
     
     /**
      *
-     * @var CategoriesComboBox
+     * @var ProductCategoryComboBox
      */
     public $combo;
     
     /**
      *
-     * @var GtkTreeView
+     * @var ProductCategoryListView
      */
     public $view;
     
-    public $show;
-    
-    public function __construct($show=null)
+    public function __construct()
     {
         parent::__construct();
         
-        switch($show){
-            case self::CATEGORY_FRAME:
-                $this->show = self::CATEGORY_FRAME;
-                break;
-            case self::VEHICLE_FRAME:
-                $this->show = self::VEHICLE_FRAME;
-                break;
-            case self::BOTH_FRAME:
-            case null:
-                $this->show = self::BOTH_FRAME;
-                break;
-            default:
-                throw Exception('wrong option');
-                break;
-        }
-        
-        $this->set_title('Categorias/Compatibilidad');
+        $this->set_title('Categorias');
         $this->build();
+        $this->set_wmclass(__APP__, 'Categorias');
+        $this->fetchCategories();
+        $this->view->connect('button-press-event', array($this, 'onButton'));
     }
     
-    private function build()
+    protected function build()
     {
+        $view = $this->view = new ProductCategoryListView();
+        
+        $dbm = THSModel::singleton();
+        $categories = $dbm->getProductCategories();
+        
+        foreach ($categories as $cat){
+            $view->append($cat);
+        }
+        
+        $scrw = new GtkScrolledWindow();
+        $scrw->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+        $scrw->add($view);
+        
         $vbox = new GtkVbox();
-        $this->add($vbox);
         
-        if ($this->show & self::CATEGORY_FRAME){
-            $this->buildCategoryFrame();
-        }
-        
-        if ($this->show & self::VEHICLE_FRAME){
-            $this->buildVehicleFrame();
-        }
-        
-    }
-    
-    private function buildVehicleFrame()
-    {
-        $frame = new GtkFrame('Vehiculos (Compatibilidad)');
-        $scrwin = new GtkScrolledWindow();
-        $vbox = new GtkVBox();
-        $hbox = new GtkHBox();
-        $frame->add($vbox);
-        
-        $scrwin->add($view = $this->buildVehicleView());
-        $createbtn = new GtkButton('Nuevo');
-        $createbtn->connect_simple('clicked', array($this, 'createVehicle'));
-        $deletebtn = new GtkButton('Eliminar');
-        $deletebtn->connect_simple('clicked', array($this, 'deleteVehicle'));
-        $hbox->pack_start($createbtn, false, false);
-        $hbox->pack_start($deletebtn, false, false);
-        $vbox->pack_start($hbox, false, false);
-        $vbox->pack_start($scrwin);
-        $this->get_child()->pack_start($frame);
-    }
-    
-    public function buildCategoryFrame()
-    {
-        $frame = new GtkFrame('Categorias');
-        $combo = $this->combo = new CategoriesComboBox();
-        $combo->populate();
-        $hbox = new GtkHBox;
-        $hbox->pack_start($combo);
-        $editbtn = new GtkButton('Editar');
-        $editbtn->connect_simple('clicked', array($this, 'editCategory'));
-        $delbtn = new GtkButton('Quitar');
-        $delbtn->connect_simple('clicked', array($this, 'deleteCategory'));
-        $addbtn = new GtkButton('Nueva');
+        $addbtn = new GtkButton('Crear Nueva');
         $addbtn->connect_simple('clicked', array($this, 'createCategory'));
-        $hbox->pack_start($delbtn, false, false);
-        $hbox->pack_start($editbtn, false, false);
-        $vbox = new GtkVBox;
-        $vbox->pack_start($hbox);
-        $vbox->pack_start($addbtn);
-        $frame->add($vbox);
-        $this->get_child()->pack_start($frame, false, false);
+        $hbox = new GtkHbox();
+        $hbox->pack_start($addbtn, false, false);
+        $vbox->pack_start($hbox, false, false);
+        $vbox->pack_start($scrw);
+        $this->add($vbox);
     }
     
+    public function onButton($view, $event)
+    {
+        if ($event->button===3){
+            $popmenu = new GtkMenu();
+            $itemModify = new GtkMenuItem('Modificar');
+            $itemModify->connect('activate', array($this, 'modifyCategory'));
+            $itemDelete = new GtkMenuItem('Eliminar');
+            $itemDelete->connect('activate', array($this, 'deleteCategory'));
+            $popmenu->append($itemModify);
+            $popmenu->append($itemDelete);
+            $popmenu->show_all();
+            $popmenu->popup();
+        }else{
+            return false;
+        }
+    }
+    
+    /**
+     * 
+     */
     public function createCategory()
     {
         $diag = new GtkDialog(
@@ -121,192 +92,77 @@ class CategoriesWindow extends GtkWindow
             case Gtk::RESPONSE_CANCEL:
                 $diag->destroy();
                 return;
-                break;
             case Gtk::RESPONSE_OK:     
                 if ($entry->get_text()==null){
                     $diag->destroy();
                     return $this->createCategory();
                 }
                 
-                $dbm = new THSModel();
-                $dbm->createProductCategory($entry->get_text());
-                $this->combo->populate();
+                $dbm = THSModel::singleton();
+                $pc = new ProductCategory();
+                $pc->name = strtoupper($entry->get_text());
+                $pc->id = $dbm->createProductCategory($pc->name);
+                if ($pc->id){
+                    $this->view->append($pc);
+                }
                 break;
         }
         
         $diag->destroy();
     }
     
-    
-    /**
-     * Creates the new vehicle
-     */
-    public function createVehicle()
+    public function modifyCategory()
     {
-        //Input dialog
-        $dialog = new GtkDialog(
-                'Crear vehiculo',
-                $this, Gtk::DIALOG_MODAL,
-                array(Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
-                        Gtk::STOCK_OK, Gtk::RESPONSE_OK));
+        $diag = new GtkDialog(
+                'Modificar categoria',
+                $this->get_toplevel(), 
+                Gtk::DIALOG_MODAL,
+                array (Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
+                    Gtk::STOCK_OK, Gtk::RESPONSE_OK));
         
-        $row = array();
-        
-        $row[] = array(new GtkLabel('Modelo:'), $model = new GtkEntry());
-        $row[] = array(new GtkLabel('Año:'), $year = GtkSpinButton::new_with_range(1900, date('Y'), 1));
-        $row[] = array(
-            $throughact=new GtkCheckButton('Crear para varios años'),
-            $through=GtkSpinButton::new_with_range(1900, date('Y'), 1)
-            );
-        
-        $through->set_sensitive(false);
-        
-        $throughact->connect('toggled', function($check, $spin){
-            if ($check->get_active()){
-                $spin->set_sensitive(true);
-            }else{
-                $spin->set_sensitive(false);
-            }
-        }, $through);
-        
-        
-        
-        $row[] = array(new GtkLabel('Version:'), $version = new GtkEntry());
-        
-        $vbox = $dialog->vbox;
-        
-        foreach ($row as $r){
-            $hbox = new GtkHBox(true);
-            $hbox->pack_start($r[0]);
-            $hbox->pack_start($r[1]);
-            $vbox->pack_start($hbox);
-        }
-        
-        $hbox = new GtkHBox(true);
-        $rbgroup = new GtkHBox;
-        $att = new GtkRadioButton($att=null, 'AT');
-        $mtt = new GtkRadioButton($att, 'MT');
-        $both = new GtkRadioButton($att, 'Crear ambas');
-        $rbgroup->pack_start($att);
-        $rbgroup->pack_start($mtt);
-        $rbgroup->pack_start($both);
-        $hbox->pack_start(new GtkLabel('Transmisión:'));
-        $hbox->pack_start($rbgroup);
-        $vbox->pack_start($hbox);
-        
-        $dialog->show_all();
-        switch($dialog->run()){
+        $pc = $this->view->getSelected();
+        $entry = new GtkEntry();
+        $entry->set_text($pc->name);
+        $diag->vbox->pack_start($entry);
+        $diag->show_all();
+        switch($diag->run()){
             case Gtk::RESPONSE_CANCEL:
-                $dialog->destroy();
-                break;
-            case Gtk::RESPONSE_OK:
-                $dbm = new THSModel();
-                $vmodel = $model->get_text();
-                $vyear = $year->get_value();
-                $vversion = $version->get_text();
-                
-                if ($att->get_active()){
-                    $vtransmission = 'AT';
-                }elseif ($mtt->get_active()){
-                    $vtransmission = 'MT';
-                }else{
-                    $vtransmission = null;
+                $diag->destroy();
+                return;
+            case Gtk::RESPONSE_OK:     
+                if ($entry->get_text()==null){
+                    $diag->destroy();
+                    return $this->createCategory();
                 }
                 
-                if ($throughact->get_active()){
-                    for ($i=$vyear; $i<=$through->get_value();++$i){
-                        if ($vtransmission===null){
-                            $dbm->createVehicle($vmodel, $i, $vversion, 'AT');
-                            $dbm->createVehicle($vmodel, $i, $vversion, 'MT');
-                        }else{
-                            $dbm->createVehicle($vmodel, $i, $vversion, $vtransmission);
-                        }
-                    }
-                    
-                    $dialog->destroy();
-                    $this->populate();
-                }else{
-                    if ($vtransmission === null){
-                        $dbm->createVehicle($vmodel, $vyear, $vversion, 'AT');
-                        $dbm->createVehicle($vmodel, $vyear, $vversion, 'MT');
-                    }
-                    $dialog->destroy();
-                    $this->populate();
+                $dbm = THSModel::singleton();
+                $pc->name = strtoupper($entry->get_text());
+                if($dbm->updateProductCategory($pc)){
+                    $this->fetchCategories();
                 }
                 break;
         }
         
+        $diag->destroy();
     }
     
-    private function buildVehicleView()
-    {
-        $this->view = $view = new GtkTreeView();
-        $model = new GtkListStore(
-            GObject::TYPE_LONG,
-            GObject::TYPE_STRING,
-            GObject::TYPE_LONG,
-            GObject::TYPE_STRING,
-            GObject::TYPE_STRING
-        );
-        
-        $view->set_model($model);
-        
-        $head = array('Id','Modelo', 'Año', 'Versión', 'Transmisión');
-        for ($i=0;$i<count($head);$i++){
-            $cr = new GtkCellRendererText();
-            $col = new GtkTreeViewColumn($head[$i], $cr, 'text', $i);
-            $view->append_column($col);
-            $col->set_sort_column_id($i);
-            
-            if ($i==0){
-                $col->set_visible(false);
-            }
-        }
-        
-        $this->populate();
-        $view->get_selection()->set_mode(Gtk::SELECTION_MULTIPLE);
-        
-        return $view;
-    }
-    
-    private function populate()
+    protected function fetchCategories()
     {
         $view = $this->view;
-        $model = $view->get_model();
-        $model->clear();
-        $dbm = new THSModel();
-        $vehicles = $dbm->getVehicles();
+        $dbm = THSModel::singleton();
+        $view->get_model()->clear();
         
-        foreach ($vehicles as $vehicle){
-            $model->append(
-                    array($vehicle->id, $vehicle->model, $vehicle->year, $vehicle->version, $vehicle->transmission)
-                    );
-        }
-    }
-    
-    public function deleteVehicle()
-    {
-        $dbm = new THSModel();
-        list($model, $paths) = $this->view->get_selection()->get_selected_rows();
-        $to_remove = array();
-        foreach ($paths as $path){
-            $iter = $model->get_iter($path);
-            if ($dbm->removeVehicle($model->get_value($iter, 0))){
-                $to_remove[] = $iter;
-            }
-        }
+        $categories = $dbm->getProductCategories();
         
-        foreach ($to_remove as $iter){
-            $model->remove($iter);
+        foreach ($categories as $pcat){
+                $this->view->append($pcat);
         }
-        
-        $dbm->close();
     }
 
     
     public function deleteCategory()
     {
-        $cat = $this->combo->getActive();
+        $cat = $this->view->getSelected();
         
         if ($cat === null){
             return true;
@@ -318,8 +174,8 @@ class CategoriesWindow extends GtkWindow
                 Gtk::DIALOG_MODAL, 
                 array (Gtk::STOCK_YES, Gtk::RESPONSE_YES,
                     Gtk::STOCK_NO, Gtk::RESPONSE_NO));
-        $msg  = '¿Está seguro que desea eliminar la siguiente categoria?'.PHP_EOL;
-        $msg .= "({$cat->id}) {$cat->name}".PHP_EOL;
+        $msg  = '¿Seguro que desea eliminar la categoria: ';
+        $msg .= "({$cat->id}) {$cat->name}?".PHP_EOL;
         $msg .= 'Esto quitará la categoría de todos los productos asociados a la misma';
         
         $diag->vbox->add(new GtkLabel($msg));
@@ -327,9 +183,9 @@ class CategoriesWindow extends GtkWindow
         switch( $diag->run()){
             case Gtk::RESPONSE_YES:
                 $diag->destroy();
-                $dbm = new THSModel();
+                $dbm = THSModel::singleton();
                 $dbm->removeProductCategory($cat->id);
-                $this->combo->populate();
+                $this->view->removeSelected();
                 break;
             case Gtk::RESPONSE_NO:
                 $diag->destroy();
@@ -340,7 +196,7 @@ class CategoriesWindow extends GtkWindow
     
     public function editCategory()
     {
-        $category = $this->combo->getActive();
+        $category = $this->view->getActive();
         
         $diag = new GtkDialog(
                 'Editar categoria', 
@@ -354,10 +210,10 @@ class CategoriesWindow extends GtkWindow
         $diag->show_all();
         
         if ($diag->run() ==  Gtk::RESPONSE_OK){
-            $dbm = new THSModel();
+            $dbm = THSModel::singleton();
             $category->name = $entry->get_text();
             $dbm->updateProductCategory($category);
-            $this->combo->populate();
+            $this->combo->fetch();
         }
         
         $diag->destroy();

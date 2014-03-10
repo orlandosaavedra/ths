@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of ProductCompatibility
  *
@@ -13,10 +7,41 @@
  */
 class ProductCompatibility 
 {
-    public $make;
-    public $model;
-    public $startyear;
-    public $endyear;
-    public $version;
-    public $transmission;
+    const MATCH_ALL = 'TODOS';
+    
+    /**
+     *
+     * @var integer Product id INT(10)
+     */
+    public $product_id=null;
+    /**
+     *
+     * @var string VARCHAR(20)
+     */
+    public $model=null;
+    /**
+     *
+     * @var string VARCHAR(20)
+     */
+    public $version=null;
+    /**
+     *
+     * @var string VARCHAR(20)
+     */
+    public $other=null;
+    /**
+     *
+     * @var integer INT(4)
+     */
+    public $year_from=null;
+    /**
+     *
+     * @var integer INT(4)
+     */
+    public $year_to=null;
+    /**
+     *
+     * @var string VARCHAR(50)
+     */
+    public $obs=null;
 }

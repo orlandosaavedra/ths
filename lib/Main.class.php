@@ -8,7 +8,7 @@
 class Main
 {  
     
-    const VERSION = 0.8;
+    const VERSION = 0.82;
     /**
      * 
      * @param type $var
@@ -27,7 +27,9 @@ class Main
      */
     public function __construct()
     {   
-        //$this->update();
+        if (strstr(strtolower(PHP_OS), 'win')){
+            $this->update();
+        }
         
         if ($this->login() === true){
             $win = new MainWindow();
@@ -38,18 +40,31 @@ class Main
         }        
     }
     
+    /**
+     * Checks for updates
+     */
     public function update()
     {
-        $check = 'http://thehondastore.no-ip.biz/ths/';
-        $download = 'http://thehondastore.no-ip.biz/ths/download.php';
+        $dialog = new GtkMessageDialog(null, 0, Gtk::MESSAGE_INFO, 0, 'Verificando actualizaciones');
+        $dialog->set_icon_from_file(THS_LOGO_FILENAME);
+        $dialog->show_all();
+        
+        $host = $GLOBALS['config']['host'];
+        $check = 'http://'.$host.'/ths';
+        $download = 'http://'.$host.'/ths/setup.exe';
         $obj = json_decode(file_get_contents($check));
         
         if ($obj->version > self::VERSION){
             $data = file_get_contents($download);
-            $filename = __APP__.'/setup/'.$obj->filename;
+            $filename = __APPDIR__.DIRECTORY_SEPARATOR.'setup'.DIRECTORY_SEPARATOR.'setup.exe';
             file_put_contents($filename, $data);
-            pclose(popen("start /B ".$filename, "r"));
+            pclose(popen("$filename /SILENT", "r"));
+            sleep(5);
+            pclose(popen(__APPDIR__.DIRECTORY_SEPARATOR.'run.phpg',"r"));
+            self::terminate();
         }
+        
+        $dialog->destroy();
     }
     
     
@@ -61,7 +76,7 @@ class Main
     public function login()
     {
         try{
-            $dbm = new THSModel();
+            $dbm = THSModel::singleton();
         }catch(Exception $e){
             Main::handleException($e);
         }
@@ -89,7 +104,7 @@ class Main
             }else{
                 $login->setWarning('Accesso Denegado');
 
-                while (Gtk::events_pending()) { Gtk::main_iteration(); }
+                Main::refresh();
                 sleep(1);
                 $login->destroy();
                 return $this->login();
@@ -100,31 +115,24 @@ class Main
     }
     
     /**
-     * Closes the application
+     * Asks if user wants to close application and close it.
      * @param MainWindow $window
      * @return boolean
      */
-    public function close($window)
+    public function close(GtkWindow $window)
     {
-        $dialog = new GtkDialog(
-                'Confirmación',
+        $dialog = new GtkMessageDialog(
                 $window,
-                Gtk::DIALOG_MODAL,
-                array(
-                    Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                    Gtk::STOCK_YES, Gtk::RESPONSE_YES
-                        )
-                );
+                0,
+                Gtk::MESSAGE_QUESTION,
+                Gtk::BUTTONS_YES_NO,
+                '¿Seguro desea salir de la aplicación');
         
-        $dialog->vbox->add(new GtkLabel('¿Seguro desea salir de la aplicación'));
-        
-        $dialog->set_size_request(400,100);
         $dialog->show_all();
-        
+
         switch($dialog->run()){
             case Gtk::RESPONSE_YES:
-                Gtk::main_quit();
-                exit(0);
+                self::terminate();
                 break;
             case Gtk::RESPONSE_NO:
                 $dialog->destroy();
@@ -167,7 +175,6 @@ class Main
     
     public function handleException(Exception $e)
     {
-        
         $diag = new GtkMessageDialog(
                 null,
                 0,
@@ -177,8 +184,13 @@ class Main
         
         $diag->run();
         $diag->destroy();
-        exit($e->getMessage());
-        
+        self::terminate();
+    }
+    
+    public static function terminate()
+    {
+        Gtk::main_quit();
+        exit();
     }
     
 }

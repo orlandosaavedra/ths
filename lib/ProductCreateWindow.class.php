@@ -50,13 +50,13 @@ class ProductCreateWindow extends GtkWindow
     public function __construct()
     {
         parent::__construct();
-        $this->_build();
+        $this->build();
     }
     
     /**
      * Builds GUI
      */
-    private function _build()
+    private function build()
     {
         $this->set_title('Crear Producto');
         $vbox = new GtkVBox();
@@ -78,26 +78,34 @@ class ProductCreateWindow extends GtkWindow
         
         $this->createbtn = new GtkButton('Crear');
         $this->createbtn->connect_simple('clicked', array($this, 'create'));
+        //$this->createbtn->set_size_request(-1, 50);
         $this->cancelbtn = new GtkButton('Cancelar');
         $this->cancelbtn->connect_simple('clicked', array($this, 'destroy'));
-        $hbox = new GtkHBox;
+        $hbox = new GtkHBox();
         
-        $hbox->pack_start($this->cancelbtn);
-        $hbox->pack_start($this->createbtn);
-        $vbox->pack_end($hbox, false, false);
-    }
-    
-    public function setCategory($combo)
-    {
-        $this->category = $combo->get_active_text();
+        $hbox->pack_start($this->cancelbtn, true, true, 10);
+        $hbox->pack_start($this->createbtn, true, true, 10);
+        $vbox->pack_end($hbox, false, false, 10);
     }
     
     public function create()
     {
+        //Open db link
         $dbm = new THSModel;
         
+        //Get product generals
         $product = $this->general->getProduct();
-        $product->category_id = $this->category->getSelectedCategory();
+        //get selected category
+        $category = $this->category->getSelectedCategory();
+        //If selected category is null, leave it otherwise assign id
+        $product->category_id = ($category == null) ?: $category->id;
+        //Check that product has a descriptino and it is bigger than 3 chars
+        If (trim($product->description)==null || strlen($product->description)<3){
+            $this->general->notify('Por favor agregue una descripción de mas de 3 letras');
+            return false;
+        }
+        
+        //Create the product in DB
         $id = $dbm->createProduct($product);
         
         if (!$id){
@@ -119,7 +127,8 @@ class ProductCreateWindow extends GtkWindow
         $compatibilities = $this->compatibility->getCompatibilityStore();
         
         foreach ($compatibilities as $compatibility){
-            $dbm->setProductCompatibility($id, $compatibility);
+            $compatibility->product_id = $id;
+            $dbm->addProductCompatibility($compatibility);
         }
         
         $diag = new GtkDialog(
@@ -135,6 +144,8 @@ class ProductCreateWindow extends GtkWindow
         $this->general->clear();
         $this->stock->clear();
         $this->compatibility->clear();
+        $this->compatibility->clearFilter();
+        $this->codes->clear();
         $this->category->populate();
         
         $diag->destroy();

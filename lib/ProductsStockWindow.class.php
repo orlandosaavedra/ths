@@ -22,7 +22,7 @@ class ProductsStockWindow extends GtkWindow
         $vbox = new GtkVbox();
         $this->add($vbox);
         
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         //Filter tools
         $filterpanel = new GtkHBox;
         
@@ -45,7 +45,7 @@ class ProductsStockWindow extends GtkWindow
         //Add filter panel to the top
         $vbox->pack_start($filterpanel, false, false);
 
-        $this->productview = new ProductsView();
+        $this->productview = new ProductListView();
         $scrwin = new GtkScrolledWindow();
         $scrwin->add($this->productview);
         $scrwin->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
@@ -55,9 +55,9 @@ class ProductsStockWindow extends GtkWindow
     
     public function populate(BranchesComboBox $combo)
     {
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         $productList = $dbm->getProductList(true);
-        $dbm->close();
+        //$dbm->close();
         $model = $this->productview->get_model();
         $model->clear();
         
@@ -104,9 +104,18 @@ class ProductsStockWindow extends GtkWindow
     {
         require_once 'fpdf.php';
         
-        $branch = $bcombo->getSelected();
-        $plist = $this->productview->getList();
+        $view = $this->productview;
+        $plist = $view->getList();
         
-        DocumentFactory::generateStockList($branch, './');
+        $tmppath = __APPDIR__ .DIRECTORY_SEPARATOR.'img'.DIRECTORY_SEPARATOR.'stock.pdf';
+        $branch = $bcombo->getSelected();
+        
+        DocumentFactory::generateAvailableStockList($plist, $branch, $tmppath);
+        
+        if (strstr(strtolower((PHP_OS)), 'win')){
+            exec("start /B $tmppath");
+        }else if (strstr(PHP_OS, 'Linux')){
+            exec("xdg-open $tmppath");
+        }
     }
 }

@@ -31,8 +31,8 @@ class ProductSearchWindow extends GtkWindow
     public function search()
     {
         $search = $this->searchFrame->getSearch();
-        $dbm = new THSModel();
-        $results = $dbm->searchProduct($search, $this->searchFrame->compatibility->getCompatibility());
+        $dbm = THSModel::singleton();
+        $results = $dbm->searchProduct($search, $this->searchFrame->compatibility->getActiveFilter());
         $this->searchFrame->clear();
         foreach ($results as $product_id){
             $product = Product::getFromId($product_id);

@@ -9,6 +9,7 @@ class Product
 {
     const STATE_NEW=1;
     const STATE_USED=2;
+    
     const STOCK_TOTAL=0;
     
     public $id=null;
@@ -32,18 +33,33 @@ class Product
             throw new Exception('Product::id must be integer greater than 0');
         }
                 
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
+        
         $product = $dbm->getProduct($pid);
         
         return $product;
     }
     
-    public function getStock()
+    public function getStock($branch_id=Product::STOCK_TOTAL)
+    {
+        $dbm = THSModel::singleton();
+        $stock = $dbm->getProductStock($this->id);
+        
+        return $stock[$branch_id];
+    }
+    
+    public function getCompatibility()
     {
         
     }
     
-    public function getCompatibility()
+    public function getCategory()
+    {
+        $dbm = THSModel::singleton();
+        $category = $dbm->getProductCategory($this->id);
+    }
+    
+    public function setCategory()
     {
         
     }

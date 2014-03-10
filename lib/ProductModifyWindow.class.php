@@ -23,7 +23,7 @@ class ProductModifyWindow extends ProductCreateWindow
      */
     public function populate($product_id)
     {
-        $dbm = new THSModel();
+        $dbm = THSModel::singleton();
         $product = Product::getFromId($product_id);
 
         $this->general->productId->set_text($product->id);
@@ -59,7 +59,9 @@ class ProductModifyWindow extends ProductCreateWindow
     {
         $dbm = new THSModel;
         $product = $this->general->getProduct();
-        $product->category = $this->category->getSelectedCategory()->id;
+        $category = $this->category->getSelectedCategory();
+        $product->category_id = ($category)? $category->id: null;
+        
         $product->stock = $this->stock->getStock();
         
         if(!$dbm->updateProduct($product)){
@@ -79,7 +81,8 @@ class ProductModifyWindow extends ProductCreateWindow
         $compatibilities = $this->compatibility->getCompatibilityStore();
         
         foreach ($compatibilities as $compatibility){
-            $dbm->setProductCompatibility($product->id, $compatibility);
+            $compatibility->product_id = $product->id;
+            $dbm->addProductCompatibility($compatibility);
         }
 
         $diag = new GtkDialog(
@@ -97,6 +100,7 @@ class ProductModifyWindow extends ProductCreateWindow
     public function lock()
     {
         $this->general->lock();
+        $this->codes->lock();
         $this->category->lock();
         $this->compatibility->lock();
         $this->stock->lock();

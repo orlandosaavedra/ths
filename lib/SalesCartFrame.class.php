@@ -79,9 +79,9 @@ class SalesCartFrame extends GtkFrame
     private function createSidePanelButtons()
     {
         $vbox = new GtkVbox();
-        $delbtn = new GtkButton('Eliminar');
+        $delbtn = new GtkButton('Limpiar');
         $delbtn->set_size_request(170, 30);
-        $delbtn->connect_simple('clicked', array($this, 'delete'));
+        $delbtn->connect_simple('clicked', array($this, 'clear'));
         
         $vbox->pack_start($delbtn, false, false);
         
@@ -194,6 +194,20 @@ class SalesCartFrame extends GtkFrame
         $hbox->pack_start($this->createSidePanel(), false);
         
         $this->add($hbox);
+    }
+    
+    public function onButton($view, $event)
+    {
+        if ($event->button===3){
+            $menu = new GtkMenu();
+            $idelete = new GtkMenuItem('Quitar');
+            $idelete->connect('activate', array($this, 'delete'));
+            $menu->append($idelete);
+            $menu->show_all();
+            $menu->popup();
+        }else{
+            return false;
+        }
     }
     
     /**
@@ -376,6 +390,7 @@ class SalesCartFrame extends GtkFrame
         
         $scrwin->add($this->view);
         $this->view->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
+        $this->view->connect('button-press-event', array($this, 'onButton'));
         
         return $scrwin;
     }

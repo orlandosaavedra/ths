@@ -15,19 +15,41 @@ class THSModel extends MySqli
      *
      * @var string
      */
-    public static $username = 'thehondastore';
+    public static $username = null;
     /**
      *
      * @var string
      */
-    public static $password = 'UK5fJ2LX9dwbybuj';
+    public static $password = null;
     /**
      *
      * @var string
      */
     public static $dbname = null;
     
+    /**
+     *
+     * @var THSModel
+     */
+    protected static $instance = null;
     
+    /**
+     * Returns the unique instance of THSModel
+     * @return THSModel
+     */    
+    public static function singleton()
+    {
+        if (is_object(self::$instance)){
+            if (self::$instance->ping()){
+                return self::$instance;
+            }else{
+                self::$instance->connect(self::$host, self::$username, self::$password, self::$dbname);
+                return self::singleton();
+            }
+        }else{
+            return new self();
+        }
+    }
     
     public function __construct()
     {
@@ -54,6 +76,12 @@ class THSModel extends MySqli
                 throw new Exception('No existe la base de datos');
                 break;
         }
+        
+        if (is_object(self::$instance)){
+            self::$instance->close();
+        }
+        
+        self::$instance = $this;
     }
     
     /**
@@ -63,8 +91,10 @@ class THSModel extends MySqli
      * @return int employee id if sucess, false if login fails
      */
     public function employeeLogin($username, $password)
-    {
+    {        
+        //Encrypt password
         $password = sha1($password);
+        
         $sql = "SELECT * FROM `employee` WHERE `username`='$username'"
                 . " AND password='$password'";
         
@@ -80,6 +110,10 @@ class THSModel extends MySqli
     
     public function getEmployee($e_id)
     {
+        if (!$this->ping()){
+            return false;
+        }
+        
         $sql = "SELECT * FROM `employee` WHERE `id`='$e_id'";
         $result = $this->query($sql);
         
@@ -88,11 +122,6 @@ class THSModel extends MySqli
         }else{
             return null;
         }
-    }
-    
-    public function createCompatibility($product_id, $description)
-    {
-        
     }
     
     /**
@@ -155,7 +184,7 @@ class THSModel extends MySqli
              . " `description`, `cost`, `price`, `category_id`)"
              . " VALUES "
              . "({$id}, {$partnumber}, {$product->state},"
-             . " '{$description}', {$cost}, {$price}, {$category->id})";
+             . " '{$description}', {$cost}, {$price}, {$category})";
          echo $sql.PHP_EOL;       
         $this->query($sql);
                 
@@ -191,60 +220,88 @@ class THSModel extends MySqli
         }
     }
     
-    public function getVehicleModels()
+    /**
+     * 
+     * @return type
+     */
+    public function getProductCompatibilityModelList()
     {
-        /**
-         * Return variable
-         */
-        $ret = array();
         
-        $result = $this->query ("SELECT DISTINCT `model` FROM `vehicle`");
+        $list = array();
+        
+        $result = $this->query ("SELECT DISTINCT `model` FROM `product_compatibility`");
         while ($obj = $result->fetch_object()){
-            $ret[] = $obj->model;
+            $list[] = $obj->model;
         }
         
-        return $ret;
+        return $list;
+    }
+   
+    /**
+     * 
+     * @param string $model
+     * @return array List of Vehicle's versions
+     */
+    public function getProductCompatibilityVersionList($model=null)
+    {
+        $list  =array();
+        
+        $sql = "SELECT DISTINCT `version` FROM `product_compatibility`";
+        
+        if ($model !== null){
+            $sql .= " WHERE `model`='$model'";
+        }
+        
+        $res = $this->query($sql);
+
+        while ($data = $res->fetch_object()){
+            $list[] = $data->version;
+        }
+        
+        return $list;
     }
     
     /**
      * 
-     * @param String $model
-     * @return Array with the available years for such model
+     * @param string $model
+     * @param string $version
+     * @return array
      */
-    public function getVehicleModelYears($model=null)
+    public function getProductCompatibilityOtherList($model=null, $version=null)
     {
-        $years = array();
+        $list = array();
         
-        if ($model !== null){
-            $res = $this->query("SELECT DISTINCT `year` FROM `vehicle` WHERE `model`='$model'");
-        }else{
-            $res = $this->query("SELECT DISTINCT `year` FROM `vehicle`");
+        $sql = "SELECT DISTINCT `other` FROM `product_compatibility`";
+        
+        $opt = array();
+        
+        if ($model){
+            $opt[] = "`model`='$model'";
         }
 
-            while ($data = $res->fetch_object()){
-                $years[] = $data->year;
+        if ($version){
+            $opt[] = "`version`='$version'";
+        }      
+        
+        if (count($opt)>0){
+            $sql .= " WHERE ";
+            
+            $sql .= implode(" AND ", $opt);
+        }
+        
+        $result = $this->query($sql);
+        
+        Main::debug($sql);
+        Main::debug($this->error);
+        
+        if ($result){
+            while ($obj = $result->fetch_object()){
+                $list[] = $obj->other;
             }
-
-            return $years;
-    }
-   
-    public function getVehicleModelVersions($model, $startyear=null, $endyear = null)
-    {
-        $versions  =array();
-        $sql = "SELECT DISTINCT `version` FROM `vehicle` WHERE `model`='$model'";
-        if ($startyear !== null){
-            $sql .= " AND `year`>='{$startyear}'";
-        }
-        if ($endyear !== null){
-            $sql .= " AND `year`<='{$endyear}'";
         }
         
-        $res = $this->query($sql);
-        while ($data = $res->fetch_object()){
-            $versions[] = $data->version;
-        }
+        return $list;
         
-        return $versions;
     }
     
     /**
@@ -287,48 +344,62 @@ class THSModel extends MySqli
      * @param type $constraint
      * @return \Product
      */
-    public function searchProduct($string, ProductCompatibility $match=null)
+    public function searchProduct
+            ($string, ProductCompatibility $match=null, ProductCategory $cat=null)
     {
         $ret = array();
         
         $sql  = "SELECT `id` FROM `product` WHERE (`id` LIKE '%$string%'"
                 . " OR `partnumber` LIKE '%$string%'"
-                . " OR `description` LIKE '%$string%')";
+                . " OR `description` LIKE '%$string%' OR "
+                . "`id` IN (SELECT `product_id` FROM `product_code` WHERE "
+                . " `code` LIKE '%$string%'))";
         
         if ($match){
             
             $csql = " AND `id` IN (SELECT DISTINCT `product_id` FROM `product_compatibility`"
-                    . " WHERE `vehicle_id` IN (SELECT `id` FROM `vehicle` WHERE ";
+                    . " WHERE ";
             
             $wcsql = array();
 
             if ($match->model){
-                $wcsql[]= " `model`='{$match->model}' ";
+                $wcsql[]= "(`model`='{$match->model}' OR `model` IS NULL)";
             }
             
-            if ($match->startyear){
-                $wcsql[]= " `year`>='{$match->startyear}'";
-            }
-            
-            if ($match->endyear){
-                $wcsql[]= " `year`<='{$match->endyear}'";
+            if ($match->year_from){
+                if ($match->year_to){
+                    
+                    //2011 2014 -> anything overlaping should come up
+                    $wcsql[] = "((`year_from`>='{$match->year_from}' OR "
+                        ."`year_to`>='{$match->year_from}') AND "
+                        . "(`year_from`<='{$match->year_to}' OR "
+                        . "`year_to`<='{$match->year_to}'))";
+                }else{
+                    $wcsql[]= "(`year_from`>='{$match->year_from}' OR `year_from` IS NULL)";
+                }
+                
+                
             }
             
             if ($match->version){
-                $wcsql []= " `version`='{$match->version}'";
+                $wcsql []= "(`version`='{$match->version}' OR `version` IS NULL)";
             }
             
-            if ($match->transmission){
-                $wcsql[] = " `transmission`='{$match->transmission}'";
+            if ($match->other){
+                $wcsql[] = "(`other`='{$match->other}' OR `other` IS NULL)";
             }
             
             $csql .= implode(' AND ', $wcsql);
-            $csql .= "))";
+            $csql .= ")";
             
             if (count($wcsql)>0){
                 $sql .= $csql;
             }
 
+        }
+        
+        if ($cat){
+            $sql .= " AND `product`.`category_id`='{$cat->id}'";
         }
         /*
         $sql = "SELECT id FROM product WHERE description LIKE '%{$string}%'";
@@ -345,6 +416,8 @@ class THSModel extends MySqli
         }*/
         
         $result = $this->query($sql);
+        
+        Main::debug($this->error);
         
         while ($obj = $result->fetch_object()){
             $ret[] = $obj->id;
@@ -381,11 +454,10 @@ class THSModel extends MySqli
     
     /**
      * 
-     * @return \Category
+     * @return \ProductCategory
      */
     public function getProductCategories()
     {
-
         $cat = array();
         $qres = $this->query("SELECT * FROM `product_category`");
         while ($cat[] = $qres->fetch_object('ProductCategory'));
@@ -393,11 +465,34 @@ class THSModel extends MySqli
         return $cat;
     }
     
+    /**
+     * 
+     * @param type $product_id
+     * @return Category
+     */
+    public function getProductCategory($product_id)
+    {
+        $sql = "SELECT * FROM `product_category` WHERE `id`=("
+                . "SELECT `category_id` FROM `product` WHERE `id`='{$product_id}')";
+        $result = $this->query($sql);
+        
+        if ($result){
+            return $result->fetch_object('ProductCategory');
+        }else{
+            return null;
+        }
+    }
+    
+    /**
+     * 
+     * @param type $name
+     * @return integer Returns the created category id or 0/false
+     */
     public function createProductCategory($name)
     {
         $name = strtoupper($name);
         if ($this->query("INSERT INTO `product_category` VALUES(NULL, '$name')")){
-            return true;
+            return $this->insert_id;
         }else{
             return false;
         }
@@ -438,6 +533,30 @@ class THSModel extends MySqli
         }
         
         return $this->affected_rows;
+    }
+    
+    public function addProductCompatibility(ProductCompatibility $pc)
+    {
+        $pid = $pc->product_id;
+        $model = ($pc->model)? "'".$this->escape_string($pc->model)."'" : 'NULL';
+        $version = ($pc->version)? "'".$this->escape_string($pc->version)."'" : 'NULL';
+        $other = ($pc->other)? "'".$this->escape_string($pc->other)."'" : 'NULL';
+        $from = ($pc->year_from)? "'".$pc->year_from."'" : 'NULL';
+        $to = ($pc->year_to)? "'".$pc->year_to."'" : 'NULL';
+        $obs = ($pc->obs)? "'".$this->escape_string($pc->obs)."'" : 'NULL';
+        
+        $sql = "INSERT INTO `product_compatibility` "
+                . "(`product_id`, `model`, `version`, `other`, `year_from`, `year_to`, `obs`)"
+                . " VALUES "
+                . "($pid, $model, $version, $other, $from, $to, $obs)";
+        
+        $result = $this->query($sql);
+        
+        if (!$result){
+            Main::debug($this->error);
+        }
+        
+        return $result;
     }
     
     public function setProductCompatibility($product_id, ProductCompatibility $compatibility)
@@ -491,20 +610,13 @@ class THSModel extends MySqli
     {
         $compatibilities = array();
         
-        $nsql = "SELECT `vehicle_id` FROM `product_compatibility` WHERE `product_id`='{$pid}'";
+        $sql = "SELECT * FROM `product_compatibility` WHERE `product_id`='{$pid}'";
+                
+        $res = $this->query($sql);
         
-        $msql = "SELECT * FROM `vehicle` WHERE `id` IN ($nsql)";
-        
-        $res = $this->query($msql);
-        
-        while ($obj = $res->fetch_object('Vehicle')){
-            $compatibility = new ProductCompatibility;
-            $compatibility->model = $obj->model;
-            $compatibility->startyear = $obj->year;
-            $compatibility->endyear = $obj->year;
-            $compatibility->version = $obj->version;
-            $compatibility->transmission = $obj->transmission;
-            $compatibilities[] = $compatibility;
+        while ($obj = $res->fetch_object('ProductCompatibility')){
+            
+            $compatibilities[] = $obj;
         }
         
         return $compatibilities;
@@ -586,37 +698,35 @@ class THSModel extends MySqli
         
     }
     
+    /**
+     * 
+     * @return \Vehicle
+     */
     public function getVehicles()
     {
         $res = $this->query("SELECT * FROM `vehicle`");
-        $ret = array();
+        $list = array();
         
-        while($obj = $res->fetch_object()){
-            $ret[] = $obj;
+        while($obj = $res->fetch_object('Vehicle')){
+            $list[] = $obj;
         }
 
-        return $ret;
+        return $list;
     }
     
-    public function createVehicle($model, $year, $version, $transmission)
+    /**
+     * @param Vehicle $v
+     * @return boolean
+     */
+    public function createVehicle(Vehicle $v)
     {
-        $model = strtoupper(trim($model));
-        $year = trim($year);
-        $version = strtoupper(trim($version));
-        $transmission = strtoupper(trim($transmission));
-        
-        switch(null){
-            case $model:
-            case $year:
-            case $version:
-            case $transmission:
-                return false;
-                break;
-        }
+        $model = strtoupper(trim($v->model));
+        $version = strtoupper(trim($v->version));
+        $other = $this->escape_string($v->other);
         
         $sql = "INSERT INTO `vehicle` "
-                . "(`model`,`year`, `version`, `transmission`) "
-                . "VALUES ('$model', '$year', '$version', '$transmission')";
+                . "(`model`, `version`, `other`) "
+                . "VALUES ('$model', '$version', '$other')";
         
         $result = $this->query($sql);
         
@@ -644,7 +754,7 @@ class THSModel extends MySqli
         $date = date('Y-m-d H:i:s');
         $total = $productCart->getTotals();
         $sql = "INSERT INTO sale (date, employee_id, branch_id, total) VALUES "
-                . "('$date', '$employee_id', '$branch_id', {$total[SalesCartFrame::TOTAL_NET]})";
+                . "('$date', '$employee_id', '$branch_id', {$total[SalesCartFrame::TOTALS_NET]})";
         $this->query($sql);
         Main::debug($this->error);
         
@@ -663,8 +773,16 @@ class THSModel extends MySqli
     {
         $category->name = strtoupper($category->name);
         $sql = "UPDATE `product_category` SET `name`='{$category->name}'"
-        . " WHERE `id`={$category->id} LIMIT 1";
-        return $this->query($sql);
+        . " WHERE `id`='{$category->id}'";
+        
+        $result = $this->query($sql);
+        
+        if ($result){
+            return true;
+        }else{
+            Main::debug($this->error);
+            return false;
+        }
     }
     
     public function addProductCode($pid, $reference, $code)
@@ -693,5 +811,25 @@ class THSModel extends MySqli
     {
         $sql = "DELETE FROM `product_code` WHERE `product_id`='$pid'";
         return $this->query($sql);
+    }
+    
+    public function matchVehicle(Vehicle $v)
+    {
+        $sql = "SELECT `id` FROM `vehicle` WHERE ";
+        
+        $model = ($v->model)?"'{$v->model}'": 'NULL';
+        $sql .= "`model`=$model AND";
+        $version = ($v->version)?"'{$v->version}'":'NULL';
+        $sql .= "`version`=$version AND";
+        $other = ($v->other)? "'{$v->other}'":'NULL';
+        $sql .= "`other`=$other LIMIT 1";
+        
+        $result = $this->query($sql);
+        
+        if ($result){
+            return $result->fetch_object()->id;
+        }else{
+            Main::debug($this->error);
+        }
     }
 }

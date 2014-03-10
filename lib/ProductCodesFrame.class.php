@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of ProductCodesFrame
  *
@@ -25,6 +19,11 @@ class ProductCodesFrame extends GtkFrame
      */
     protected $view;
     
+    
+    protected $locked=false;
+    
+    protected $panel;
+    
     public function __construct()
     {
         parent::__construct('Codigos externos');
@@ -36,7 +35,7 @@ class ProductCodesFrame extends GtkFrame
     
     private function createPanel()
     {
-        $panel = new GtkHBox();
+        $this->panel = $panel = new GtkHBox();
         $reference = new GtkEntry();
         $code = new GtkEntry();
         $add = new GtkButton('Agregar');
@@ -95,15 +94,20 @@ class ProductCodesFrame extends GtkFrame
     
     public function onButton($view, $event)
     {
-        if ($event->button==1) return false;
-        if ($event->button==2) return true;
+        if ($event->button==1){ return false;}
+        if ($event->button==2){ return true;}
         if ($event->button==3){
             $this->showContextMenu($event);
+            return false;
         }
     }
     
     public function showContextMenu(GdkEvent $event)
     {
+        if($this->locked){
+            return false;
+        }
+        
         $parray = $this->view->get_path_at_pos($event->x, $event->y);
         $path = $parray[0][0];
                 
@@ -150,5 +154,11 @@ class ProductCodesFrame extends GtkFrame
             $model->append(array($row->reference, $row->code));
         }
         
+    }
+    
+    public function lock($bool=true)
+    {
+        $this->locked = $bool;
+        $this->panel->set_visible(false);
     }
 }

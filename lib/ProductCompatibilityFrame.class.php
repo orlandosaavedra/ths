@@ -10,13 +10,13 @@ class ProductCompatibilityFrame extends GtkFrame
     const MATCH_ALL = 'TODOS';
     /**
      *
-     * @var GtkTreeView
+     * @var ProductCompatibilityListView
      */
     protected $view;
     
     /**
      *
-     * @var CompatibilityFilterHBox
+     * @var ProductCompatibilityFilterPanel
      */
     protected $compatibilityFilter;
     
@@ -28,31 +28,32 @@ class ProductCompatibilityFrame extends GtkFrame
         $this->add($vbox);
         $hbox = new GtkHBox;
         $this->panel = $hbox;
-        $this->compatibilityFilter = new CompatibilityFilterHBox();
+        $this->compatibilityFilter = new ProductCompatibilityNewPanel();
         $hbox->pack_start($this->compatibilityFilter);
         
         if ($store){
             $addbtn = new GtkButton('Agregar');
-            //$rmbtn = new GtkButton('Quitar');
+            //$newbtn = new GtkButton('Quitar');
+            /*
             $confbtn = new GtkButton('');
             $image = GtkImage::new_from_icon_name(Gtk::STOCK_PREFERENCES, Gtk::ICON_SIZE_BUTTON);
             $label = $confbtn->get_child();
             $label->destroy();
             $confbtn->add($image);
-            $confbtn->connect_simple('clicked', array($this, 'modifyCompatibilities'));
+            $confbtn->connect_simple('clicked', array($this, 'modifyCompatibilities'));*/
         }
 
         if ($store){
             $hbox->pack_start($addbtn, false, false);
             //$hbox->pack_start($rmbtn);
-            $hbox->pack_start($confbtn, false, false);
+            //$hbox->pack_start($confbtn, false, false);
         }
         
         $vbox->pack_start($hbox, false, false);
         
         if ($store){
             
-            $this->_createCompatibilityListView();
+            $this->createCompatibilityListView();
             $addbtn->connect_simple('clicked', array($this, 'addCompatibility'));
 
             //$rmbtn->connect_simple('clicked', array($this, 'removeCompatibility'));
@@ -65,21 +66,32 @@ class ProductCompatibilityFrame extends GtkFrame
     public function modifyCompatibilities()
     {
         $win = new CategoriesWindow(CategoriesWindow::VEHICLE_FRAME);
+        
+        $win->set_icon_from_file(THS_LOGO_FILENAME);
         $win->set_transient_for($this->get_toplevel());
         $win->set_modal(true);
         $win->connect_simple('destroy', array($this, 'clearFilter'));
         $win->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
-        $win->set_size_request(400, 250);
+        $win->set_default_size(400, 250);
         $win->show_all();
     }
     
     public function addCompatibility()
     {
-        $pc = $this->compatibilityFilter->getActiveCompatibility();
+        $pc = $this->compatibilityFilter->getActiveFilter();
+        
         if ($pc===null){
             return;
         }
-        $this->storeCompatibility($pc);
+        
+        $pc->product_id = null;
+        
+        $this->view->append($pc);
+    }
+    
+    public function storeCompatibility(ProductCompatibility $pc)
+    {
+        $this->view->append($pc);
     }
     
     /**
@@ -95,82 +107,18 @@ class ProductCompatibilityFrame extends GtkFrame
      * Creates the GtkTreeview for compatibility list view
      * @return \GtkScrolledWindow
      */
-    private function _createCompatibilityListView()
+    private function createCompatibilityListView()
     {
         $scrwin = new GtkScrolledWindow();
         $scrwin->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
         
-        $model = new GtkListStore(
-                GObject::TYPE_STRING, //Modelo
-                GObject::TYPE_STRING, //Desde
-                GObject::TYPE_STRING, //Hasta
-                Gobject::TYPE_STRING, //Version
-                GObject::TYPE_STRING //Transmision
-        );
-        
-        $this->view = new GtkTreeView($model);
-        $colheaders = array ('Modelo', 'Desde', 'Hasta', 'Versión', 'Transmision');
-        for ($i=0; $i<count($colheaders);$i++){
-            $crt = new GtkCellRendererText();
-            $col = new GtkTreeViewColumn($colheaders[$i], $crt, 'text', $i);
-            $this->view->append_column($col);
-            $col->set_sort_column_id($i);
-        }
-        
-        $this->view->connect('button-press-event', array($this, 'onButton'));
-        $this->view->get_selection()->set_mode(Gtk::SELECTION_MULTIPLE);
+        $this->view = new ProductCompatibilityListView();
         
         $scrwin->add($this->view);
         
         $this->get_child()->pack_start($scrwin);
     }
-    
-    public function onButton($view, $event)
-    {
-        if($event->button===1){ return false; }
-        if($event->button===2){ return true; }
-        if($event->button===3){
-            if($this->view->get_path_at_pos($event->x, $event->y)){
-                $menu = new GtkMenu();
-                $rmitem = new GtkMenuItem('Eliminar');
-                $rmitem->connect_simple('activate', array($this,'removeCompatibility'));
-                $menu->append($rmitem);
-                $menu->show_all();
-                $menu->popup();
-                return true;
-            }
-        }
-    }
 
-
-    /**
-     * 
-     * @param GtkComboBox $model
-     * @param GtkComboBox $start_year
-     * @param GtkComboBox $end_year
-     * @param GtkComboBox $version
-     * @param GtkComboBox $transmission
-     */
-    public function storeCompatibility(ProductCompatibility $pc)
-    {
-        $viewmodel = $this->view->get_model();
-        
-        $data = array(
-                    $pc->model,//->get_active_text(),
-                    $pc->startyear,//->get_active_text(),
-                    $pc->endyear,//->get_active_text(),
-                    $pc->version,//->get_active_text(),
-                    $pc->transmission//->get_active_text())
-                );
-        
-        for ($i=0;$i<count($data);++$i){
-            if ($data[$i]===null){
-                $data[$i] = CompatibilityFilterComboBox::MATCH_ALL;
-            }
-        }
-        
-        $viewmodel->append($data);
-    }
     
     /**
      * 
@@ -200,6 +148,8 @@ class ProductCompatibilityFrame extends GtkFrame
      */
     public function getCompatibilityStore()
     {
+        return $this->view->getCompatibilityList();
+        
         $model = $this->view->get_model();
         
         $iter = $model->get_iter_first();
@@ -220,20 +170,26 @@ class ProductCompatibilityFrame extends GtkFrame
                 }
                 
                 switch($i){
-                    case 0:
+                    case ProductCompatibilityListView::COLUMN_PRODUCT_ID:
+                        $row->product_id = $value;
+                        break;
+                    case ProductCompatibilityListView::COLUMN_MODEL:
                         $row->model = $value;
                         break;
-                    case 1:
-                        $row->startyear = $value;
-                        break;
-                    case 2:
-                        $row->endyear = $value;
-                        break;
-                    case 3: 
+                    case ProductCompatibilityListView::COLUMN_VERSION:
                         $row->version = $value;
                         break;
-                    case 4:
-                        $row->transmission = $value;
+                    case ProductCompatibilityListView::COLUMN_OTHER:
+                        $row->other = $value;
+                        break;
+                    case ProductCompatibilityListView::COLUMN_YEAR_FROM:
+                        $row->year_from = $value;
+                        break;
+                    case ProductCompatibilityListView::COLUMN_YEAR_TO:
+                        $row->year_to = $value;
+                        break;
+                    case ProductCompatibilityListView::COLUMN_OBS:
+                        $row->obs = $value;
                         break;
                     default:
                         break;
@@ -250,7 +206,7 @@ class ProductCompatibilityFrame extends GtkFrame
     
     public function getCompatibility()
     {
-        return $this->compatibilityFilter->getActiveCompatibility();        
+        return $this->compatibilityFilter->getActiveFilter();        
     }
     
     public function clear()
