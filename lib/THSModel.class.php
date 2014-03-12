@@ -546,9 +546,9 @@ class THSModel extends MySqli
         $obs = ($pc->obs)? "'".$this->escape_string($pc->obs)."'" : 'NULL';
         
         $sql = "INSERT INTO `product_compatibility` "
-                . "(`product_id`, `model`, `version`, `other`, `year_from`, `year_to`, `obs`)"
+                . "(`product_id`, `model`, `version`, `other`, `year_from`, `year_to`)"
                 . " VALUES "
-                . "($pid, $model, $version, $other, $from, $to, $obs)";
+                . "($pid, $model, $version, $other, $from, $to)";
         
         $result = $this->query($sql);
         

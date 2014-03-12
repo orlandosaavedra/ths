@@ -117,7 +117,11 @@ final class ProductSearchFrame extends GtkFrame
         
         $vbox->pack_start($hbox, false, false, false);
         $vbox->pack_start($this->compatibility, false, false);
-        $vbox->pack_start($this->category, false, false);
+        
+        $hbox = new GtkHBox();
+        $hbox->pack_start(new GtkLabel('Categoria:'), false, false);
+        $hbox->pack_start($this->category);
+        $vbox->pack_start($hbox, false, false);
         $vbox->pack_start($this->_scrwin);
 
     }

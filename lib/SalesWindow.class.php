@@ -218,7 +218,7 @@ class SalesWindow extends GtkWindow
             return; 
         }
         
-        $filename = __APPDIR__ . DIRECTORY_SEPARATOR . 'img'.DIRECTORY_SEPARATOR .'cotiza.pdf';
+        $filename = sys_get_temp_dir().DIRECTORY_SEPARATOR .'thscotiza.pdf';
         $dialog = new GtkDialog('Generando cotización', $this, Gtk::DIALOG_MODAL);
         $dialog->vbox->pack_start(new GtkLabel('Porfavor espere...'));
         $dialog->show_all();

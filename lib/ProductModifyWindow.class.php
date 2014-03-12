@@ -95,6 +95,7 @@ class ProductModifyWindow extends ProductCreateWindow
         $diag->show_all();
         $diag->run();
         $diag->destroy();
+        $this->destroy();
     }
     
     public function lock()

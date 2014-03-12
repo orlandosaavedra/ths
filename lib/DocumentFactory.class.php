@@ -85,16 +85,16 @@ class DocumentFactory
         $doc->Cell(15+40+90+20+10+20, 5, '', 1,1);
         $doc->Cell(15+40+90+20+10, 5, 'Subtotal:', 1, 0, 'R');
         $doc->Cell(20,5, '$'.$subtotal, 1, 1, 'R');
-        $doc->Cell(15+40+90+20+10, 5, 'Descuento:', 1, 0, 'R');
-        $doc->Cell(20, 5, '('.$pdiscount.'%) $'.$discount, 1, 1, 'R');
+        $doc->Cell(15+40+90+20+10, 5, 'Descuento:('.$pdiscount.'%)', 1, 0, 'R');
+        $doc->Cell(20, 5, '$'.$discount, 1, 1, 'R');
         $doc->Cell(15+40+90+20+10, 5, 'Neto:', 1, 0, 'R');
-        $doc->Cell(20, 5, $net, 1, 1, 'R');
+        $doc->Cell(20, 5, '$'.$net, 1, 1, 'R');
         $doc->Cell(15+40+90+20+10, 5, 'IVA:', 1, 0, 'R');
-        $doc->Cell(20, 5, $tax, 1, 1, 'R');
+        $doc->Cell(20, 5, '$'.$tax, 1, 1, 'R');
         $doc->Cell(15+40+90+20+10, 5, 'Total:', 1, 0, 'R');
-        $doc->Cell(20, 5, $total, 1, 1, 'R');
+        $doc->Cell(20, 5, '$'.$total, 1, 1, 'R');
         $doc->Ln();
-        $doc->Cell(0,5, '*Precios no incluyen IVA', 0,0,'L');
+        $doc->Cell(0,5, '*Precios por producto no incluyen IVA', 0,0,'L');
         
         $doc->Output($path, 'F');
     }

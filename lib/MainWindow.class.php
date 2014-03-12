@@ -163,8 +163,9 @@ class MainWindow extends GtkWindow
         $income->destroy();
         $window = new ProductSearchWindow();
         $window->set_transient_for($this);
+        $window->set_modal(true);
         $window->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
-        $window->set_size_request(-1, 300);
+        $window->set_default_size(800, 600);
         $window->show_all();
         
         $window->searchFrame->connect('activated', array($this, 'modifyProduct'));

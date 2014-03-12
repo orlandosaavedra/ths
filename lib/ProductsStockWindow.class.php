@@ -107,7 +107,7 @@ class ProductsStockWindow extends GtkWindow
         $view = $this->productview;
         $plist = $view->getList();
         
-        $tmppath = __APPDIR__ .DIRECTORY_SEPARATOR.'img'.DIRECTORY_SEPARATOR.'stock.pdf';
+        $tmppath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'thsstock.pdf';
         $branch = $bcombo->getSelected();
         
         DocumentFactory::generateAvailableStockList($plist, $branch, $tmppath);

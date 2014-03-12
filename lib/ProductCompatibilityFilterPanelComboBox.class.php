@@ -32,9 +32,10 @@ class ProductCompatibilityFilterPanelComboBox extends GtkComboBox
     
     public function __do_changed()
     {
-        if ($this->get_active_text() == null){
+        if ($this->get_active_text() === null){
             return true;
         }else{
+            echo 'emiting changed';
             $this->emit('on-select');
             return false;
         }

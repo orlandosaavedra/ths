@@ -13,7 +13,6 @@ class ProductCompatibilityListView extends GtkTreeView
     const COLUMN_OTHER = 3;
     const COLUMN_YEAR_FROM = 4;
     const COLUMN_YEAR_TO = 5;
-    const COLUMN_OBS = 6;
     
     /**
      *
@@ -25,8 +24,7 @@ class ProductCompatibilityListView extends GtkTreeView
         'Version',
         'Otro',
         'Desde',
-        'Hasta',
-        'Obs. Producto'
+        'Hasta'
         
     );
     
@@ -38,8 +36,7 @@ class ProductCompatibilityListView extends GtkTreeView
                     GObject::TYPE_STRING, // product_compatibility.version
                     GObject::TYPE_STRING, // product_compatbility.other
                     GObject::TYPE_STRING, // product_compatibility.year_from
-                    GObject::TYPE_STRING, // product_compatibility.year_to
-                    GObject::TYPE_STRING // product_compatibility.obs
+                    GObject::TYPE_STRING // product_compatibility.year_to
                 );
         
         parent::__construct($model);    

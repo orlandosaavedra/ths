@@ -89,22 +89,32 @@ class ProductCompatibilityFilterPanel extends GtkHBox
             $this->model->populate($vmodels);
             $this->version->lock();
             $this->other->lock();
-            $this->year_from->lock();
+            $this->year_from->populate($years);
+            //$this->year_from->lock();
             $this->year_to->lock();
         }
         
-        if ($combo === $this->model){
-            $versions = $dbm->getProductCompatibilityVersionList($filter->model);
-            $this->version->populate($versions);
-            $others = $dbm->getProductCompatibilityOtherList($filter->model, null);
-            $this->other->populate($others);
-            $this->year_from->populate($years);
+        if ($combo === $this->model){   
+            if ($filter->model){
+                $versions = $dbm->getProductCompatibilityVersionList($filter->model);
+                $this->version->populate($versions);
+                $others = $dbm->getProductCompatibilityOtherList($filter->model, null);
+                $this->other->populate($others);
+                $this->year_from->populate($years);
+            }else{
+                $this->version->lock();
+                $this->other->lock();
+            }
         }
         
         if ($combo === $this->version){
-            $others = $dbm->getProductCompatibilityOtherList($filter->model, $filter->version);
-            $this->other->populate($others);
-            $this->year_from->populate($years);
+            if ($filter->version){
+                $others = $dbm->getProductCompatibilityOtherList($filter->model, $filter->version);
+                $this->other->populate($others);
+                $this->year_from->populate($years);
+            }else{
+                $this->other->lock();
+            }
         }
         
         if ($combo === $this->year_from){
@@ -126,8 +136,8 @@ class ProductCompatibilityFilterPanel extends GtkHBox
     public function getActiveFilter()
     {
         $pc = new ProductCompatibility();
-        $pc->model = $this->model->get_active_text();
-        $pc->version = $this->version->get_active_text();
+        $pc->model = strtoupper($this->model->get_active_text());
+        $pc->version = strtoupper($this->version->get_active_text());
         $pc->other = $this->other->get_active_text();
         $pc->year_from = $this->year_from->get_active_text();
         $pc->year_to = $this->year_to->get_active_text();

@@ -3,23 +3,25 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductSearchWindow.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/Product.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/CategoriesWindow.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductDetailWindow.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/SalesWindow.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductCreateWindow.class.php</file>
-            <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductCompatibilityFilterPanel.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductSearchFrame.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/MainWindow.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductCompatibilityNewPanel.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductCompatibilityFilter.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/Main.class.php</file>
-            <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductCompatibilityFilterPanelComboBox.class.php</file>
+            <file>file:/home/orlando/NetBeansProjects/ths/etc/config.ini</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductsStockWindow.class.php</file>
-            <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductCategoryFrame.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/DocumentFactory.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductCompatibilityPanel.class.php</file>
+            <file>file:/home/orlando/NetBeansProjects/ths/lib/SalesCartFrame.class.php</file>
+            <file>file:/home/orlando/NetBeansProjects/ths/test.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/ProductModifyWindow.class.php</file>
+            <file>file:/home/orlando/NetBeansProjects/ths/lib/THSModel.class.php</file>
             <file>file:/home/orlando/NetBeansProjects/ths/lib/VehicleListView.class.php</file>
         </group>
     </open-files>

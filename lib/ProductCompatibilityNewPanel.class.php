@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of ProductCompatibilityNewPanel
  *
@@ -17,6 +11,11 @@ class ProductCompatibilityNewPanel extends ProductCompatibilityFilterPanel
     {
         parent::__construct();
         $this->populateOptions();
+        
+        $years = array();
+        $current = (int) date('Y');
+        for ($i=$current;$i>1963;$years[]=$i--);
+        $this->year_from->populate($years);
     }
     
     protected function populateOptions()
@@ -25,6 +24,11 @@ class ProductCompatibilityNewPanel extends ProductCompatibilityFilterPanel
         $models = $dbm->getProductCompatibilityModelList();
         $versions = $dbm->getProductCompatibilityVersionList();
         $others = $dbm->getProductCompatibilityOtherList();
+        
+        //Clearing
+        $this->model->get_model()->clear();
+        $this->version->get_model()->clear();
+        $this->other->get_model()->clear();
         
         $this->model->append_text(self::MATCH_ALL);
         foreach ($models as $available){
@@ -58,7 +62,7 @@ class ProductCompatibilityNewPanel extends ProductCompatibilityFilterPanel
         //$this->model->connect('on-select', array($this, 'changed'));
         //$this->version->connect('on-select', array($this, 'changed'));
         $this->year_from->connect('on-select', array($this, 'changed'));
-        $this->year_to->connect('on-select', array($this, 'changed'));
+        //$this->year_to->connect('on-select', array($this, 'changed'));
     }
     
     public function changed($combo=null)
@@ -66,7 +70,7 @@ class ProductCompatibilityNewPanel extends ProductCompatibilityFilterPanel
         
         $years = array();
         $current = (int) date('Y');
-        
+        /*
         if($combo===null){
             for ($i=$current;$i>1963;$years[]=$i--);
             $this->year_from->populate($years);
@@ -74,7 +78,7 @@ class ProductCompatibilityNewPanel extends ProductCompatibilityFilterPanel
             $this->version->clearEntry();
             $this->other->clearEntry();
             $this->populateOptions();
-        }
+        }*/
         
         if ($combo === $this->year_from){
             

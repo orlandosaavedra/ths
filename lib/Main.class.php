@@ -8,7 +8,7 @@
 class Main
 {  
     
-    const VERSION = 0.85;
+    const VERSION = 0.92;
     /**
      * 
      * @param type $var
@@ -49,6 +49,8 @@ class Main
         $dialog->set_icon_from_file(THS_LOGO_FILENAME);
         $dialog->show_all();
         
+        Main::refresh();
+        
         $host = $GLOBALS['config']['host'];
         $check = 'http://'.$host.'/ths';
         $download = 'http://'.$host.'/ths/setup.exe';
@@ -56,12 +58,30 @@ class Main
         
         if ($obj->version > self::VERSION){
             $data = file_get_contents($download);
-            $filename = __APPDIR__.DIRECTORY_SEPARATOR.'setup'.DIRECTORY_SEPARATOR.'setup.exe';
+            $filename = sys_get_temp_dir().DIRECTORY_SEPARATOR.'setup-ths.exe';
             file_put_contents($filename, $data);
-            pclose(popen("$filename /SILENT", "r"));
-            sleep(5);
-            pclose(popen(__APPDIR__.DIRECTORY_SEPARATOR.'run.phpg',"r"));
-            self::terminate();
+            
+            $desc  = array(
+                array('pipe', 'r'),
+                array('pipe', 'w'),
+                array('pipe', 'a')
+            );
+            
+            $pipes = null;
+            $psid = proc_open("$filename /SILENT", $desc, $pipes);
+            
+            while (true){
+                $stat  =  proc_get_status($psid);
+                if (!$stat['running']){
+                    proc_close($psid);
+                    $wsh = new COM('Wscript.shell');
+                    $wsh->run(__APPDIR__.DIRECTORY_SEPARATOR.'run.php', 0);
+                    //pclose(popen('start /b "'.__APPDIR__.DIRECTORY_SEPARATOR.'run.phpg"',"r"));
+                    self::terminate();
+                }
+            }
+            
+            
         }
         
         $dialog->destroy();

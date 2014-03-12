@@ -26,7 +26,7 @@ class ProductCompatibility
     public $version=null;
     /**
      *
-     * @var string VARCHAR(20)
+     * @var string VARCHAR(50)
      */
     public $other=null;
     /**
@@ -39,9 +39,4 @@ class ProductCompatibility
      * @var integer INT(4)
      */
     public $year_to=null;
-    /**
-     *
-     * @var string VARCHAR(50)
-     */
-    public $obs=null;
 }
