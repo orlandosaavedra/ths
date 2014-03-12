@@ -156,7 +156,6 @@ final class ProductSearchFrame extends GtkFrame
     
     public function appendResult(Product $product)
     {
-        $dbm = THSModel::singleton();
         //$stock = $dbm->getProductStock($product->id);
         $model = $this->view->get_model();
         $data = array(
@@ -165,7 +164,7 @@ final class ProductSearchFrame extends GtkFrame
             $product->description,
             ($product->state==Product::STATE_NEW)? 'Nuevo': 'Usado',
             $product->price,
-            $product->stock[0]
+            $product->getStock()
                 );
         if (is_object($model)){
             $model->append($data);

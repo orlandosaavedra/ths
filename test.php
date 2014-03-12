@@ -36,14 +36,8 @@ foreach ($rows as $row){
     
 }*/
 
-$desc = array(
-    array('pipe', 'r'),
-    array('pipe', 'w'),
-    array('pipe', 'a')
-);
-$a = proc_open('ping -c 4 127.0.0.1', $desc, $pipes);
+$com = new COM('Wscript.shell');
+$rest = $com->run('ping 127.0.0.1', 3, false);
 
-while(true){
-sleep(1);
-    var_dump(proc_get_status($a));
-}
+
+

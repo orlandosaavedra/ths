@@ -10,7 +10,14 @@ class ProductCompatibilityNewPanelComboBox extends GtkComboBoxEntry
     public function __construct()
     {
         $model = new GtkListStore(GObject::TYPE_STRING);
-        parent::__construct($model, 0);
+        parent::__construct();
+        $this->set_text_column(0);
+        $this->clear();
+        $this->set_model($model);
+        $crt = new GtkCellRendererText();
+        $this->pack_start($crt);
+        $this->set_attributes($crt, 'text', 0);
+        
     }
     
     

@@ -72,7 +72,7 @@ class SalesWindow extends GtkWindow
         $results = $dbm->searchProduct($str, $pc, $cat);
         
         foreach($results as $pid){
-            $frame->appendResult(Product::getFromId($pid));
+            $frame->appendResult($pid); //Product::getFromId($pid));
         }
     }
     

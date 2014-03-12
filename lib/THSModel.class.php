@@ -349,7 +349,7 @@ class THSModel extends MySqli
     {
         $ret = array();
         
-        $sql  = "SELECT `id` FROM `product` WHERE (`id` LIKE '%$string%'"
+        $sql  = "SELECT * FROM `product` WHERE (`id` LIKE '%$string%'"
                 . " OR `partnumber` LIKE '%$string%'"
                 . " OR `description` LIKE '%$string%' OR "
                 . "`id` IN (SELECT `product_id` FROM `product_code` WHERE "
@@ -401,6 +401,8 @@ class THSModel extends MySqli
         if ($cat){
             $sql .= " AND `product`.`category_id`='{$cat->id}'";
         }
+        
+        $sql .= " LIMIT 20";
         /*
         $sql = "SELECT id FROM product WHERE description LIKE '%{$string}%'";
         if ($search['model']!= null || $search['year'] != null){
@@ -419,8 +421,8 @@ class THSModel extends MySqli
         
         Main::debug($this->error);
         
-        while ($obj = $result->fetch_object()){
-            $ret[] = $obj->id;
+        while ($obj = $result->fetch_object('Product')){
+            $ret[] = $obj;//->id;
         }
         
         return $ret;

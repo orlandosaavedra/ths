@@ -75,7 +75,7 @@ class Main
                 if (!$stat['running']){
                     proc_close($psid);
                     $wsh = new COM('Wscript.shell');
-                    $wsh->run(__APPDIR__.DIRECTORY_SEPARATOR.'run.php', 0);
+                    $wsh->run(__APPDIR__.DIRECTORY_SEPARATOR.'run.phpg', 1);
                     //pclose(popen('start /b "'.__APPDIR__.DIRECTORY_SEPARATOR.'run.phpg"',"r"));
                     self::terminate();
                 }
