@@ -94,7 +94,7 @@ class ProductListView extends GtkTreeView
         if ($iter == null){
             return false;
         }
-        return Product::getFromId($model->get_value($iter, 0));
+        return Product::fetch($model->get_value($iter, 0));
     }
     
     public function getList()

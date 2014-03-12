@@ -23,6 +23,7 @@ class ProductSearchWindow extends GtkWindow
     {
         parent::__construct();
         $this->searchFrame = new ProductSearchFrame();
+        $this->searchFrame->view->get_column(5)->set_visible(false);
         $this->add($this->searchFrame);
         $this->set_title('Buscar producto');
         $this->searchFrame->connect_simple('search', array($this, 'search'));
@@ -34,8 +35,7 @@ class ProductSearchWindow extends GtkWindow
         $dbm = THSModel::singleton();
         $results = $dbm->searchProduct($search, $this->searchFrame->compatibility->getActiveFilter());
         $this->searchFrame->clear();
-        foreach ($results as $product_id){
-            $product = Product::getFromId($product_id);
+        foreach ($results as $product){
             $this->searchFrame->appendResult($product);
         }
     }

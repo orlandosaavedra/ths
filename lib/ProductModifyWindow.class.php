@@ -24,7 +24,7 @@ class ProductModifyWindow extends ProductCreateWindow
     public function populate($product_id)
     {
         $dbm = THSModel::singleton();
-        $product = Product::getFromId($product_id);
+        $product = Product::a($product_id);
 
         $this->general->productId->set_text($product->id);
         $this->general->productId->set_sensitive(false);

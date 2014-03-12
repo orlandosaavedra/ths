@@ -5,7 +5,7 @@
  *
  * @author orlando
  */
-class SalesWindow extends GtkWindow
+class SaleWindow extends GtkWindow
 {
     /**
      *
@@ -70,8 +70,10 @@ class SalesWindow extends GtkWindow
         $cat = $frame->category->getActive();
         
         $results = $dbm->searchProduct($str, $pc, $cat);
+        $stockList = $dbm->getProductStockList();
         
         foreach($results as $pid){
+            $pid->stock[Product::STOCK_TOTAL] = $stockList[$pid->id][Product::STOCK_TOTAL];
             $frame->appendResult($pid); //Product::getFromId($pid));
         }
     }

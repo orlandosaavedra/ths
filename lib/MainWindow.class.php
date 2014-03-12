@@ -81,7 +81,7 @@ class MainWindow extends GtkWindow
      */
     public function sells()
     {
-        $sell = new SalesWindow();
+        $sell = new SaleWindow();
         $sell->set_wmclass(__APP__, 'Venta');   
         $sell->set_transient_for($this);
         $sell->set_modal(true);

@@ -152,6 +152,29 @@ class THSModel extends MySqli
         return $stock;
     }
     
+    public function getProductStockList()
+    {
+        $sql = "SELECT * FROM `product_stock`";
+        $resultset = $this->query($sql);
+        $list = array();
+        
+        while ($row = $resultset->fetch_object()){
+            $list[$row->product_id][$row->branch_id] = $row->stock; 
+        }
+        
+        foreach ($list as $pid => $value){
+            $total = 0;
+            
+            foreach ($value as $bid => $stock){
+                $total += (int)$stock;
+            }
+            
+            $list[$pid][Product::STOCK_TOTAL] = $total;
+        }
+        
+        return $list;
+    }
+    
     /**
      * 
      * @param type $id
@@ -163,7 +186,6 @@ class THSModel extends MySqli
         
         if ($qres->num_rows){
             $product = $qres->fetch_object('Product');
-            $product->stock = $this->getProductStock($id);
             return $product;
         }else{
             return false;
@@ -660,16 +682,24 @@ class THSModel extends MySqli
     }
     
     /**
-     * @deprecated since version 1
+     * 
      * @return \Product
      */
     public function getProducts()
     {
-        $plist = $this->getProductList();
-        $parray = new SplFixedArray($plist->getSize());
         
-        for ($i=0;$i<$plist->getSize();++$i){
-            $parray[$i] = Product::getFromId((int)$plist[$i]);
+        
+        $sql = "SELECT COUNT(*) as `total` FROM `product`";
+        
+        $rset = $this->query($sql);
+        $total = $rset->fetch_object()->total;
+        $parray = new SplFixedArray($total);
+        
+        $sql = "SELECT * FROM `product`";
+        $rset = $this->query($sql);
+        
+        for ($i=0;$i<$total;++$i){
+            $parray[$i] = $rset->fetch_object('Product');
         }
         
         return $parray;
