@@ -63,9 +63,13 @@ class ProductCreateWindow extends GtkWindow
         $this->add($vbox);
         
         $this->general = new ProductGeneralFrame();
+        $this->general->set_border_width(5);
         $this->codes = new ProductCodesFrame();
+        $this->codes->set_border_width(5);
+        $this->codes->set_size_request(-1, 200);
         $this->category = new ProductCategoryFrame();
         $this->compatibility = new ProductCompatibilityFrame();
+        $this->compatibility->set_size_request(-1, 200);
         $this->stock= new ProductStockFrame();
         
         $vbox->pack_start($this->general, false, false, 5);

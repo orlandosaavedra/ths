@@ -1,5 +1,19 @@
 <?php
 
+include_once 'lib/GtkEntryMasker.class.php';
+
+$a = new GtkEntry();
+$w = new GtkWindow();
+GtkEntryMasker::$decimal = ',';
+GtkEntryMasker::$thousands = '.';
+GtkEntryMasker::$currency = '$';
+
+$a->connect('key-press-event', array('gtkentrymasker', 'maskmoney'));
+$w->add($a);
+$w->show_all();
+Gtk::main();
+
+/*
 $data = file_get_contents('inventario.csv');
 
 $rows = explode("\n", $data);
@@ -8,6 +22,8 @@ $mysqli = new Mysqli('localhost', 'root', 'root', 'The_Honda_Store');
 
 
 foreach ($rows as $row){
+ * 
+ *//*
     $row = str_replace('"', '', $row);
     $cell = explode(',', $row);
     
@@ -44,32 +60,40 @@ foreach ($rows as $row){
         $year_from = explode(';', $year_from);
         $year_to = explode(';', $year_to);
 
-        for ($i=0;$i<2;$i++){
-            echo 'LOOP: '.$i.PHP_EOL;
-            
-            $m = (key_exists($i, $model)) ? "'".$model[$i]."'" : "'".$model[0]."'";
-            if (empty($m)){
-                $m = "'NULL'";
+        for ($i=0;$i<2;$i++){            
+            $m = (key_exists($i, $model)) ? $model[$i]: $model[0];
+            if (empty($m) || $m === 'NULL'){
+                $m = "NULL";
+            }else{
+                $m = "'$m'";
             }
             
-            $v = (key_exists($i, $version)) ? "'".$version[$i]."'" : "'".$version[0]."'";
-            if (empty($m)){
-                $v = "'NULL'";
+            $v = (key_exists($i, $version)) ? $version[$i] : $version[0];
+            if (empty($m) || $v === 'NULL'){
+                $v = "NULL";
+            }else{
+                $v = "'$v'";
             }
             
-            $o = (key_exists($i, $other)) ? "'".$other[$i]."'" : "'".$other[0]."'";
-            if (empty($o)){
-                $o = "'NULL'";
+            $o = (key_exists($i, $other)) ? $other[$i] :$other[0];
+            if (empty($o) || $o === 'NULL'){
+                $o = "NULL";
+            }else{
+                $o = "'$o'";
             }
             
-            $yf = (key_exists($i, $year_from)) ? "'".$year_from[$i]."'" : "'".$year_from[0]."'";
-            if (empty($yf)){
-                $yf = "'NULL'";
+            $yf = (key_exists($i, $year_from)) ? $year_from[$i] : $year_from[0];
+            if (empty($yf) || $yf === 'NULL'){
+                $yf = "NULL";
+            }else{
+                $yf = "'$yf'";
             }
             
-            $yt = (key_exists($i, $year_to)) ? "'".$year_to[$i]."'" : "'".$year_to[0]."'";
-            if (empty($yt)){
-                $yt = "'NULL'";
+            $yt = (key_exists($i, $year_to)) ? $year_to[$i]: $year_to[0];
+            if (empty($yt) || $yt === 'NULL'){
+                $yt = "NULL";
+            }else{
+                $yt = "'$yt'";
             }
             
 

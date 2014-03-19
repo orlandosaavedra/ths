@@ -20,6 +20,7 @@ class Product
     public $price=null;
     public $category=null;
     public $stock=array();
+    public $procedence=null;
     public $category_id=null;
     
     /**

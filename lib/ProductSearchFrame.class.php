@@ -112,6 +112,7 @@ final class ProductSearchFrame extends GtkFrame
         
         $this->add($vbox);
         
+        $hbox->pack_start(new GtkLabel('Busqueda:'));
         $hbox->pack_start($this->searchEntry);
         $hbox->pack_start($this->searchButton, false, false, false  );
         

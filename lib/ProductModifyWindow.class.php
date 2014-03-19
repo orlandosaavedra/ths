@@ -24,11 +24,11 @@ class ProductModifyWindow extends ProductCreateWindow
     public function populate($product_id)
     {
         $dbm = THSModel::singleton();
-        $product = Product::a($product_id);
+        $product = Product::fetch($product_id);
 
-        $this->general->productId->set_text($product->id);
-        $this->general->productId->set_sensitive(false);
-        $this->general->productPartnumber->set_text($product->partnumber);
+        $this->general->id->set_text($product->id);
+        $this->general->id->set_sensitive(false);
+        $this->general->partnumber->set_text($product->partnumber);
         $this->general->productCost->set_value((double)$product->cost);
         $this->general->productPrice->set_value((double)$product->price);
         $this->general->productDescription->set_text($product->description);
@@ -38,7 +38,7 @@ class ProductModifyWindow extends ProductCreateWindow
         
         // Sets product condition (New or Used)
         if ($product->state == Product::STATE_NEW){
-            $this->general->productStateNew->set_active(true);
+            $this->general->condition->set_active(true);
         }else{
             $this->general->productStateUsed->set_active(true);
         }

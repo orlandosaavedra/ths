@@ -23,7 +23,8 @@ class ProductCompatibilityFilterPanelComboBox extends GtkComboBox
     public function __construct() 
     {
         $model = new GtkListStore(GObject::TYPE_STRING);
-        parent::__construct($model);
+        parent::__construct();
+        $this->set_model($model);
         $crt = new GtkCellRendererText();
         $this->pack_start($crt);
         $this->set_attributes($crt, 'text', 0);
@@ -35,7 +36,7 @@ class ProductCompatibilityFilterPanelComboBox extends GtkComboBox
         if ($this->get_active_text() === null){
             return true;
         }else{
-            echo 'emiting changed';
+            echo 'emiting changeda';
             $this->emit('on-select');
             return false;
         }
