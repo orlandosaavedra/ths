@@ -159,6 +159,6 @@ class ProductCodesFrame extends GtkFrame
     public function lock($bool=true)
     {
         $this->locked = $bool;
-        $this->panel->set_visible(false);
+        $this->panel->destroy();
     }
 }

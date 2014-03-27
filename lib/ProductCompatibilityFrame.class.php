@@ -20,6 +20,8 @@ class ProductCompatibilityFrame extends GtkFrame
      */
     protected $compatibilityFilter;
     
+    protected $locked = false;
+    
     public function __construct($store=true)
     {
         parent::__construct('Compatibilidad');
@@ -33,31 +35,29 @@ class ProductCompatibilityFrame extends GtkFrame
         
         if ($store){
             $addbtn = new GtkButton('Agregar');
-            //$newbtn = new GtkButton('Quitar');
-            /*
-            $confbtn = new GtkButton('');
-            $image = GtkImage::new_from_icon_name(Gtk::STOCK_PREFERENCES, Gtk::ICON_SIZE_BUTTON);
-            $label = $confbtn->get_child();
-            $label->destroy();
-            $confbtn->add($image);
-            $confbtn->connect_simple('clicked', array($this, 'modifyCompatibilities'));*/
-        }
-
-        if ($store){
             $hbox->pack_start($addbtn, false, false);
-            //$hbox->pack_start($rmbtn);
-            //$hbox->pack_start($confbtn, false, false);
+            $this->createCompatibilityListView();
+            $addbtn->connect_simple('clicked', array($this, 'addCompatibility'));
         }
         
         $vbox->pack_start($hbox, false, false);
+    }
+    
+     /**
+     * Creates the GtkTreeview for compatibility list view
+     * @return \GtkScrolledWindow
+     */
+    private function createCompatibilityListView()
+    {
+        $scrwin = new GtkScrolledWindow();
+        $scrwin->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
         
-        if ($store){
-            
-            $this->createCompatibilityListView();
-            $addbtn->connect_simple('clicked', array($this, 'addCompatibility'));
-
-            //$rmbtn->connect_simple('clicked', array($this, 'removeCompatibility'));
-        }
+        $this->view = new ProductCompatibilityListView();
+        $this->view->connect_simple('right-click', array($this, 'viewMenu'));
+        
+        $scrwin->add($this->view);
+        
+        $this->get_child()->pack_start($scrwin);
     }
     
     /**
@@ -67,7 +67,7 @@ class ProductCompatibilityFrame extends GtkFrame
     {
         $win = new CategoriesWindow(CategoriesWindow::VEHICLE_FRAME);
         
-        $win->set_icon_from_file(THS_LOGO_FILENAME);
+        $win->set_icon_from_file(THS_LOGO_PATH);
         $win->set_transient_for($this->get_toplevel());
         $win->set_modal(true);
         $win->connect_simple('destroy', array($this, 'clearFilter'));
@@ -85,7 +85,6 @@ class ProductCompatibilityFrame extends GtkFrame
         }
         
         $pc->product_id = null;
-        
         $this->view->append($pc);
     }
     
@@ -103,20 +102,18 @@ class ProductCompatibilityFrame extends GtkFrame
         $this->compatibilityFilter->changed();
     }
     
-   /**
-     * Creates the GtkTreeview for compatibility list view
-     * @return \GtkScrolledWindow
-     */
-    private function createCompatibilityListView()
+    public function viewMenu()
     {
-        $scrwin = new GtkScrolledWindow();
-        $scrwin->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+        if ($this->locked){
+            return false;
+        }
         
-        $this->view = new ProductCompatibilityListView();
-        
-        $scrwin->add($this->view);
-        
-        $this->get_child()->pack_start($scrwin);
+        $menu = new GtkMenu();
+        $menuitemdelete = new GtkMenuItem('Eliminar');
+        $menuitemdelete->connect_simple('activate', array($this, 'removeCompatibility'));
+        $menu->append($menuitemdelete);
+        $menu->show_all();
+        $menu->popup();
     }
 
     
@@ -223,5 +220,6 @@ class ProductCompatibilityFrame extends GtkFrame
     public function lock()
     {
         $this->panel->destroy();
+        $this->locked = true;
     }
 }

@@ -91,7 +91,7 @@ class ProductCompatibilityFilterPanel extends GtkHBox
             $this->other->lock();
             $this->year_from->populate($years);
             //$this->year_from->lock();
-            $this->year_to->lock();
+            $this->year_to->populate($years);
         }
         
         if ($combo === $this->model){   

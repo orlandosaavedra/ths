@@ -34,7 +34,7 @@ class LoginWindow extends GtkWindow
     public function __construct() {
         parent::__construct();
         $this->_build();
-        $this->set_icon_from_file(THS_LOGO_FILENAME);
+        $this->set_icon_from_file(THS_LOGO_PATH);
         $this->set_wmclass(__APP__, __APP__);
         $this->set_title('Ingreso');
     }
