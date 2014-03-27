@@ -1,11 +1,5 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of ProductView
  *
@@ -13,6 +7,15 @@
  */
 class ProductListView extends GtkTreeView
 {
+    protected $viewmodel = array(
+        'Codigo' => GObject::TYPE_LONG,
+        'Número de Parte' => GObject::TYPE_STRING,
+        'Descripción' => GObject::TYPE_STRING,
+        'Estado' => GObject::TYPE_STRING,
+        'Procedencia' => GObject::TYPE_STRING,
+        'Precio' => GObject::TYPE_STRING,
+        'Stock' => GObject::TYPE_LONG
+    );
     
     public $__gsignals = array(
         'right-click' => array(
@@ -24,37 +27,28 @@ class ProductListView extends GtkTreeView
     public function __construct()
     {
         parent::__construct();
-        $this->_createModel();
-        $this->_createColumns();
+        $this->createModel();
+        $this->createColumns();
         
         $this->connect('button-release-event', array($this, 'onButton'));
     }
     
-    private function _createModel()
+    private function createModel()
     {
         
-        $model = new GtkListStore(
-                Gobject::TYPE_LONG, //id
-                GObject::TYPE_STRING, //part number
-                GObject::TYPE_STRING, //descripcion
-                GObject::TYPE_STRING, //estado
-                GObject::TYPE_LONG, //precio
-                Gobject::TYPE_LONG //stock
-        );
+        $model = new GtkListStore();
+        $model->set_column_types($this->viewmodel);
         
         $this->set_model($model);
     }
     
-    private function _createColumns()
+    private function createColumns()
     {
-        $columnsHeaders = array(
-            'Codigo',
-            'Número de Parte',
-            'Descripción',
-            'Estado',
-            'Precio',
-            'Stock'
-        );
+        
+        $columnsHeaders = array();
+        foreach ($this->viewmodel as $title => $type){
+            $columnsHeaders[] = $title;
+        }
         
         for ($i=0;$i<count($columnsHeaders);++$i){
             $cellrenderer = new GtkCellRendererText();
@@ -94,7 +88,7 @@ class ProductListView extends GtkTreeView
         if ($iter == null){
             return false;
         }
-        return Product::getFromId($model->get_value($iter, 0));
+        return Product::fetch($model->get_value($iter, 0));
     }
     
     public function getList()

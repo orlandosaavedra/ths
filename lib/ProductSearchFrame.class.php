@@ -86,7 +86,7 @@ final class ProductSearchFrame extends GtkFrame
     public function getSelected()
     {
         list ($model, $iter) = $this->view->get_selection()->get_selected();
-        $row = Product::getFromId($model->get_value($iter, 0));
+        $row = Product::fetch($model->get_value($iter, 0));
         return $row;
     }
     
@@ -112,6 +112,7 @@ final class ProductSearchFrame extends GtkFrame
         
         $this->add($vbox);
         
+        $hbox->pack_start(new GtkLabel('Busqueda:'));
         $hbox->pack_start($this->searchEntry);
         $hbox->pack_start($this->searchButton, false, false, false  );
         
@@ -164,7 +165,7 @@ final class ProductSearchFrame extends GtkFrame
             $product->description,
             ($product->state==Product::STATE_NEW)? 'Nuevo': 'Usado',
             $product->price,
-            $product->getStock()
+            $product->stock[Product::STOCK_TOTAL]
                 );
         if (is_object($model)){
             $model->append($data);
@@ -186,7 +187,7 @@ final class ProductSearchFrame extends GtkFrame
         
         do {
             for ($i=0;$i<$model->get_n_columns();$i++){
-                $product = Product::getFromId($model->get_value($iter, 0));
+                $product = Product::fetch(get_value($iter, 0));
             }
             
             $ret[] = $product;

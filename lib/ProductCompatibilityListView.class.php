@@ -87,8 +87,7 @@ class ProductCompatibilityListView extends GtkTreeView
             ($pc->version)?: ProductCompatibility::MATCH_ALL,
             ($pc->other)?: ProductCompatibility::MATCH_ALL,
             ($pc->year_from)?: ProductCompatibility::MATCH_ALL,
-            ($pc->year_to)?: ProductCompatibility::MATCH_ALL,
-            $pc->obs
+            ($pc->year_to)?: ProductCompatibility::MATCH_ALL
         );
         
         $model = $this->get_model();

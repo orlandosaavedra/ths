@@ -152,6 +152,29 @@ class THSModel extends MySqli
         return $stock;
     }
     
+    public function getProductStockList()
+    {
+        $sql = "SELECT * FROM `product_stock`";
+        $resultset = $this->query($sql);
+        $list = array();
+        
+        while ($row = $resultset->fetch_object()){
+            $list[$row->product_id][$row->branch_id] = $row->stock; 
+        }
+        
+        foreach ($list as $pid => $value){
+            $total = 0;
+            
+            foreach ($value as $bid => $stock){
+                $total += (int)$stock;
+            }
+            
+            $list[$pid][Product::STOCK_TOTAL] = $total;
+        }
+        
+        return $list;
+    }
+    
     /**
      * 
      * @param type $id
@@ -163,7 +186,6 @@ class THSModel extends MySqli
         
         if ($qres->num_rows){
             $product = $qres->fetch_object('Product');
-            $product->stock = $this->getProductStock($id);
             return $product;
         }else{
             return false;
@@ -178,28 +200,23 @@ class THSModel extends MySqli
         $cost = ($product->cost)?: 0;
         $price = ($product->price)?: 0;
         $description = $this->escape_string(strtoupper($product->description));
+        $procedence = (trim($product->procedence))? "'".$product->procedence."'": 'NULL';
+        
         
         $sql = "INSERT INTO `product` "
              . "(`id`, `partnumber`, `state`,"
-             . " `description`, `cost`, `price`, `category_id`)"
+             . " `description`, `procedence`, `cost`, `price`, `category_id`)"
              . " VALUES "
              . "({$id}, {$partnumber}, {$product->state},"
-             . " '{$description}', {$cost}, {$price}, {$category})";
-         echo $sql.PHP_EOL;       
+             . " '{$description}', {$procedence}, {$cost}, {$price}, {$category})";
+      
         $this->query($sql);
                 
         if ($this->errno){
             main::debug($this->error);
             return false;
         }else{
-            $pid = $this->insert_id;
-            /*
-            $branches = $this->getBranches();
-            
-            foreach ($branches as $branch){
-                $this->query("INSERT INTO `stock` VALUES ($id, {$branch->id}, 0)");
-            }*/
-            
+            $pid = $this->insert_id;            
             return $pid;
         }
     }
@@ -402,7 +419,7 @@ class THSModel extends MySqli
             $sql .= " AND `product`.`category_id`='{$cat->id}'";
         }
         
-        $sql .= " LIMIT 20";
+        $sql .= " LIMIT 50";
         /*
         $sql = "SELECT id FROM product WHERE description LIKE '%{$string}%'";
         if ($search['model']!= null || $search['year'] != null){
@@ -624,6 +641,12 @@ class THSModel extends MySqli
         return $compatibilities;
     }
     
+    /**
+     * 
+     * @param Product $product
+     * @return boolean
+     * @throws Exception
+     */
     public function updateProduct(Product $product)
     {
         if ($product->id == null){
@@ -638,6 +661,7 @@ class THSModel extends MySqli
                 . " `partnumber`='{$product->partnumber}',"
                 . " `state`='{$product->state}',"
                 . " `description`='{$description}',"
+                . " `procedence`='{$product->procedence}',"
                 . " `cost`='{$product->cost}',"
                 . " `price`='{$product->price}',"
                 . " `category_id`=$category"
@@ -660,16 +684,23 @@ class THSModel extends MySqli
     }
     
     /**
-     * @deprecated since version 1
+     * 
      * @return \Product
      */
     public function getProducts()
     {
-        $plist = $this->getProductList();
-        $parray = new SplFixedArray($plist->getSize());
         
-        for ($i=0;$i<$plist->getSize();++$i){
-            $parray[$i] = Product::getFromId((int)$plist[$i]);
+        $sql = "SELECT COUNT(*) as `total` FROM `product`";
+        
+        $rset = $this->query($sql);
+        $total = $rset->fetch_object()->total;
+        $parray = new SplFixedArray($total);
+        
+        $sql = "SELECT * FROM `product`";
+        $rset = $this->query($sql);
+        
+        for ($i=0;$i<$total;++$i){
+            $parray[$i] = $rset->fetch_object('Product');
         }
         
         return $parray;
@@ -833,5 +864,24 @@ class THSModel extends MySqli
         }else{
             Main::debug($this->error);
         }
+    }
+    
+    public function getProductOriginList()
+    {
+        $list = array();
+        
+        $sql = "SELECT DISTINCT `origin` FROM `product`";
+        
+        /**
+         * @var mysqli_result
+         */
+        $result = $this->query($sql);
+        
+        while ($row = $result->fetch_object()){
+            $list[] = $row->origin;
+        }
+        
+        return $list;
+        
     }
 }

@@ -56,7 +56,8 @@ class ProductsStockWindow extends GtkWindow
     public function populate(BranchesComboBox $combo)
     {
         $dbm = THSModel::singleton();
-        $productList = $dbm->getProductList(true);
+        $productList = $dbm->getProducts();
+        $stockList = $dbm->getProductStockList();
         //$dbm->close();
         $model = $this->productview->get_model();
         $model->clear();
@@ -78,10 +79,10 @@ class ProductsStockWindow extends GtkWindow
         $bid = $branch->id;
         Main::debug($bid);
         
-        foreach ($productList as $product_id){
-            $p = Product::getFromId($product_id);
+        foreach ($productList as $p){
+            //$p = Product::fetch($product_id);
             
-            if ($p->stock[$bid] <= 0){
+            if ($stockList[$p->id][Product::STOCK_TOTAL] <= 0){
                 continue;
             }
             
@@ -91,7 +92,7 @@ class ProductsStockWindow extends GtkWindow
                 $p->description,
                 ($p->state == Product::STATE_NEW)? 'Nuevo':'Usado',
                 $p->price,
-                $p->stock[$bid]
+                $stockList[$p->id][$bid]
             ));
         }
     }

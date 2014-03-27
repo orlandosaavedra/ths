@@ -8,26 +8,37 @@
  */
 class ProductGeneralFrame extends GtkFrame
 {
+    
+    protected $entries = array(
+        'id' => null,
+        'partnumber' => null,
+        'state' => null,
+        'procedence' => null,
+        'cost'=>null,
+        'price'=>null,
+        'description'=>null
+        
+    );
     /**
      *
      * @var GtkEntry
      */
-    public $productId;
+    public $id;
     /**
      *
      * @var GtkEntry
      */
-    public $productPartnumber;
+    public $partnumber;
     /**
      *
-     * @var GtkRadioButton
+     * @var ProductConditionComboBox
      */
-    public $productStateNew;
+    public $condition;
+    
     /**
-     *
-     * @var GtkRadioButton
+     * @var GtkEntry
      */
-    public $productStateUsed;
+    public $origin;
     
     /**
      *
@@ -46,98 +57,85 @@ class ProductGeneralFrame extends GtkFrame
     public $productDescription;
     
     protected $blockexistent = true;
-    
-    //protected $notifyLabel = null;
 
     public function __construct()
     {
-        parent::__construct('General');
-        $this->set_border_width(3);
-        $this->productId = $id = new GtkEntry();
-        //$this->notifyLabel = new GtkLabel();
-        //$this->notifyLabel->set_alignment(0.5, 0.5);
-        $id->set_max_length(10);
-        $id->set_size_request(120, -1);
-        $id->connect('focus-out-event', array($this, 'validateId'));
-        $id->connect('key-press-event', array('Main', 'restrictNumbersOnly'));
+        parent::__construct();
+        $this->createEntries();
+        $this->configureEntries();
+        $this->layout();
+    }
+    
+    protected function createEntries()
+    {
+        //product->id
+        $this->id = new GtkEntryNumeric(10);
+        $this->id->set_size_request(120, -1);
+        //product->partnumber
+        $this->partnumber = new GtkEntry();
+        $this->partnumber->set_max_length(50);
+        //product->condition
+        $this->condition = new ProductConditionComboBox();
+        //product->origin
+        $this->origin = new GtkEntry();
         
-        $this->productPartnumber = $partn = new GtkEntry();
-        $partn->set_max_length(50);
-        $partn->set_size_request(200, -1);
-        $partn->connect('focus-out-event', array($this, 'validateExistence'));
+        $this->cost = new GtkEntryNumeric();
+        $this->price = new GtkEntryNumeric();
         
-        $this->productStateNew = null;
-        $this->productStateNew = new GtkRadioButton($this->productStateNew, 'Nuevo');
-        $this->productStateUsed= new GtkRadioButton($this->productStateNew, 'Usado');
-        //$this->productStateNew->connect_simple('focus-out-event', array($this, 'validateExistence'), $partn);
-        $this->productStateNew->connect_simple('toggled', array($this, 'validateExistence'), $partn);
-        $this->productCost = $cost = GtkSpinButton::new_with_range(0, 9999999999, 1000);
-        $this->productPrice = $price = GtkSpinButton::new_with_range(0, 9999999999, 1000);
-        $this->productDescription = $description = new GtkEntry();
-        $description->set_max_length(200);
+        $this->description = new GtkEntry();  
+        $this->description->set_max_length(200);
+        $this->description->set_size_request(600, -1);
+    }
+    
+    protected function configureEntries()
+    {
+        $dbm = new THSModel();
+        $completion = new GtkEntryCompletion();
+        $lstore = new GtkListStore(GObject::TYPE_STRING);
         
-        $this->productCost->connect(
-                'value-changed',
-                function($cost, $price){
-                    $v = $cost->get_value();
-                    $price->set_value($v*1.3);
-                }, $this->productPrice);
         
-        /**
-         * Packing
-         */
+        $origins = $dbm->getProductOriginList();
+        foreach ($origins as $origin){
+            $lstore->append(array($origin));
+        }
+        
+        $completion->set_model($lstore);
+        $this->origin->set_completion($completion);
+    }
+    
+    protected function layout()
+    {
         $vbox = new GtkVBox();
         $this->add($vbox);
         
-        //$vbox->pack_start($this->notifyLabel);
+        $layout = array(
+            0 => array (
+                'Codigo' => $this->id,
+                'N° Parte' =>  $this->partnumber,
+                'Condición' => $this->condition
+            ),
+            1 => array(
+                'Origen' => $this->origin,
+                'Costo' => $this->cost,
+                'Precio' => $this->price
+            ),
+            2 => array(
+                'Descripción' => $this->description
+            )
+        );
         
-        $row = array();
-        $row[0] = new GtkHBox();
-        $lcode = new GtkLabel('Código interno:');
-        $lcode->set_size_request(120, -1);
-        $lcode->set_alignment(1, 0.5);
-        $row[0]->pack_start($lcode, false, false);
-        $row[0]->pack_start($id, false, false);
-        //$hbox = new GtkHBox;
-        $lpart = new GtkLabel('Numero de Parte:');
-        $lpart->set_size_request(120, -1);
-        $lpart->set_alignment(1, 0.5);
-        $row[0]->pack_start($lpart, false, false);
-        $row[0]->pack_start($partn, false, false);
-        
-        $row[1] = new GtkHBox;
-        $lcond = new GtkLabel('Condición:');
-        $lcond->set_size_request(120, -1);
-        $lcond->set_alignment(1, 0.5);
-        $row[1]->pack_start($lcond, false, false);
-        $row[1]->pack_start($this->productStateNew, false, false);
-        $row[1]->pack_start($this->productStateUsed, false, false);
-        $row[1]->pack_start(new GtkLabel());
-        
-        $row[2] = new GtkHBox();
-        $lcost = new GtkLabel('Costo:');
-        $lcost->set_size_request(120, -1);
-        $lcost->set_alignment(1, 0.5);
-        $lprice = new GtkLabel('Precio:');
-        $lprice->set_size_request(120, -1);
-        $lprice->set_alignment(1, 0.5);
-        $row[2]->pack_start($lcost, false, false);
-        $row[2]->pack_start($cost, false, false);
-        $row[2]->pack_start($lprice, false, false);
-        $row[2]->pack_start($price, false,false);
-        $row[2]->pack_start(new GtkLabel());
-        
-        $row[3] = new GtkHBox;
-        $ldesc = new GtkLabel('Descripción:');
-        $ldesc->set_size_request(120, 30);
-        $ldesc->set_alignment(1, 0.5);
-        $row[3]->pack_start($ldesc, false, false);
-        $row[3]->pack_start($description);
-        
-        foreach ($row as $hbox){
-            $vbox->pack_start($hbox, false, false);
+        foreach ($layout as $row){
+            $hbox = new GtkHBox();
+            foreach ($row as $text => $widget){
+                $label = new GtkLabel($text);
+                $label->set_size_request(100, -1);
+                $label->set_alignment(1, 0.5);
+                $hbox->pack_start($label, false, false);
+                $hbox->pack_start($widget, false, false);
+            }
+            
+            $vbox->pack_start($hbox);
         }
-        
     }
     
     /**
@@ -182,17 +180,17 @@ class ProductGeneralFrame extends GtkFrame
         }
         
         $dbm = THSModel::singleton();
-        $pn = trim($this->productPartnumber->get_text());
+        $pn = trim($this->partnumber->get_text());
         
         if ($pn == null){
             return false;
         }
         
-        $state = ($this->productStateNew->get_active())? Product::STATE_NEW :Product::STATE_USED;
+        $state = ($this->condition->get_active())? Product::STATE_NEW :Product::STATE_USED;
         $sql = "SELECT `id` FROM `product` WHERE `partnumber`='$pn'"
                 . " AND `state`='$state'";
         
-        $id = trim($this->productId->get_text());
+        $id = trim($this->id->get_text());
         
         if ($id != null){
             $sql .= " AND `id`!='{$id}'";
@@ -206,23 +204,23 @@ class ProductGeneralFrame extends GtkFrame
         
         if ($result->num_rows){
             if ($state == Product::STATE_NEW && $this->productStateUsed->get_sensitive() == true){
-                $this->productStateNew->set_sensitive(false);
+                $this->condition->set_sensitive(false);
                 $this->productStateUsed->set_active(true);
                 
-            }else if ($state == Product::STATE_USED && $this->productStateNew->get_sensitive() == true){
+            }else if ($state == Product::STATE_USED && $this->condition->get_sensitive() == true){
                 $this->productStateUsed->set_sensitive(false);
-                $this->productStateNew->set_active(true);
+                $this->condition->set_active(true);
                 
             }else {
                 $this->notify('El numero de parte ya existe USADO y NUEVO');
-                $this->productStateNew->set_sensitive(true);
+                $this->condition->set_sensitive(true);
                 $this->productStateUsed->set_sensitive(true);
-                $this->productPartnumber->set_text('');
+                $this->partnumber->set_text('');
                 
             }
             
         }else{
-            $this->productStateNew->set_sensitive(true);
+            $this->condition->set_sensitive(true);
             $this->productStateUsed->set_sensitive(true);
         }
         
@@ -232,20 +230,21 @@ class ProductGeneralFrame extends GtkFrame
     public function getProduct()
     {
         $product = new Product();
-        $product->id = ($this->productId->get_text())?: null;
-        $product->partnumber = ($this->productPartnumber->get_text())?: null;
-        $product->description = $this->productDescription->get_text();
-        $product->cost = $this->productCost->get_value();
-        $product->price = $this->productPrice->get_value();
-        $product->state = ($this->productStateNew->get_active())? Product::STATE_NEW :Product::STATE_USED;
+        $product->id = $this->id->get_text();
+        $product->partnumber = $this->partnumber->get_text();
+        $product->description = $this->description->get_text();
+        $product->origin = $this->origin->getActive();
+        $product->cost = $this->cost->get_text();
+        $product->price = $this->price->get_text();
+        $product->state = $this->condition->getActive();
         return $product;
     }
     
     public function clear()
     {
-        $this->productStateNew->set_active(true);
-        $this->productId->set_text('');
-        $this->productPartnumber->set_text('');
+        $this->condition->set_active(true);
+        $this->id->set_text('');
+        $this->partnumber->set_text('');
         $this->productCost->set_value(0);
         $this->productPrice->set_value(0);
         $this->productDescription->set_text('');
@@ -259,11 +258,11 @@ class ProductGeneralFrame extends GtkFrame
     
     public function lock($bool=true)
     {
-        $this->productId->set_editable(!$bool);
-        $this->productPartnumber->set_editable(!$bool);
+        $this->id->set_editable(!$bool);
+        $this->partnumber->set_editable(!$bool);
         $this->productDescription->set_editable(!$bool);
         $this->productPrice->set_sensitive(!$bool);
-        $this->productStateNew->set_sensitive(!$bool);
+        $this->condition->set_sensitive(!$bool);
         $this->productStateUsed->set_sensitive(!$bool);
     }
     

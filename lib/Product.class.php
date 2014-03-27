@@ -20,6 +20,7 @@ class Product
     public $price=null;
     public $category=null;
     public $stock=array();
+    public $procedence=null;
     public $category_id=null;
     
     /**
@@ -27,7 +28,7 @@ class Product
      * @param integer $pid
      * @return Product
      */
-    public static function getFromId($pid)
+    public static function fetch($pid)
     {
         if ($pid == null){
             throw new Exception('Product::id must be integer greater than 0');

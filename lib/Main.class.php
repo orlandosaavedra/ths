@@ -8,7 +8,7 @@
 class Main
 {  
     
-    const VERSION = 0.92;
+    const VERSION = 0.97;
     /**
      * 
      * @param type $var

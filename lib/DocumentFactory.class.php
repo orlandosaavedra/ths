@@ -124,7 +124,7 @@ class DocumentFactory
         $fpdf->Cell(15, 8, 'Real', 1, 1);
         
         foreach ($plist as $pid){
-            $product = Product::getFromId($pid);
+            $product = Product::fetch($pid);
             $fpdf->Cell(20, 8, $product->id, 1, 0, 'C');
             $fpdf->Cell(30, 8, $product->partnumber, 1, 0, 'C');
             $fpdf->Cell(80, 8, iconv('UTF8', 'cp1252',$product->description), 1, 0, 'L');

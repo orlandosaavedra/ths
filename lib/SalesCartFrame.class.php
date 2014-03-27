@@ -245,7 +245,7 @@ class SalesCartFrame extends GtkFrame
         $rows = $this->getRows();
         $products = array();
         foreach ($rows as $row){
-            $product = Product::getFromId($row[0]);
+            $product = Product::fetch($row[0]);
             $product->price = $row[4];
             $product->qty = $row[5];
             $products[] =$product;
