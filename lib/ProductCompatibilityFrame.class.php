@@ -67,7 +67,7 @@ class ProductCompatibilityFrame extends GtkFrame
     {
         $win = new CategoriesWindow(CategoriesWindow::VEHICLE_FRAME);
         
-        $win->set_icon_from_file(THS_LOGO_PATH);
+        $win->set_icon_from_file(APPLOGO);
         $win->set_transient_for($this->get_toplevel());
         $win->set_modal(true);
         $win->connect_simple('destroy', array($this, 'clearFilter'));

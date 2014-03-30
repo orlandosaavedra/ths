@@ -23,7 +23,7 @@ class ProductSearchWindow extends GtkWindow
     {
         parent::__construct();
         $this->searchFrame = new ProductSearchFrame();
-        $this->searchFrame->view->get_column(5)->set_visible(false);
+        $this->searchFrame->listview->get_column(5)->set_visible(false);
         $this->add($this->searchFrame);
         $this->set_title('Buscar producto');
         $this->searchFrame->connect_simple('search', array($this, 'search'));

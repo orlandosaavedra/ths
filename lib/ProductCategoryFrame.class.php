@@ -53,7 +53,7 @@ class ProductCategoryFrame extends GtkFrame
         $win->set_transient_for($this->get_toplevel());
         $win->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
         $win->set_modal(true);
-        $win->set_icon_from_file(THS_LOGO_PATH);
+        $win->set_icon_from_file(APPLOGO);
         $win->set_default_size(200, 200);
         $win->connect_simple('destroy', array($this, 'populate'));
         $win->show_all();

@@ -26,7 +26,12 @@ class GtkEntryMasker
         return false;
     }
     
-    public static function maskmoney(GtkEntry $entry, GdkEvent $event)
+    public static function mask(GtkEntry $entry, $masktype)
+    {
+        $entry->connect('key-press-event', array('GtkEntryMasker', $masktype));
+    }
+    
+    public static function money(GtkEntry $entry, GdkEvent $event)
     {
         if (self::controlevent($event)){
             return false; //let the event continue
@@ -59,7 +64,7 @@ class GtkEntryMasker
         
     }
     
-    public static function masknumeric(GtkEntry $entry, GdkEvent $event)
+    public static function numeric(GtkEntry $entry, GdkEvent $event)
     {
         if (self::controlevent($event)){
             return false; //let the event continue
@@ -92,7 +97,7 @@ class GtkEntryMasker
         return false;
     }
     
-    public static function maskuppercase(GtkEntry $entry, GdkEvent $event)
+    public static function uppercase(GtkEntry $entry, GdkEvent $event)
     {
 
         if (self::controlevent($event)){

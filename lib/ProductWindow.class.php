@@ -1,6 +1,6 @@
 <?php
+
 /**
- * Description of IncomeCreateWindow
  *
  * @author orlando
  */
@@ -63,8 +63,8 @@ class ProductWindow extends GtkWindow
      * Builds GUI
      */
     protected function build()
-    {
-        $vbox = new GtkVBox();
+    {        
+        $vbox = new GtkVbox();
         $this->add($vbox);
         
         $this->general = new ProductGeneralFrame();

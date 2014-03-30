@@ -33,6 +33,7 @@ class Main
         
         if ($this->login() === true){
             $win = new MainWindow();
+            $win->loadModules();
             $win->connect('delete-event', array($this, 'close'));
             $win->show_all();
 
@@ -75,7 +76,7 @@ class Main
                 if (!$stat['running']){
                     proc_close($psid);
                     $wsh = new COM('Wscript.shell');
-                    $wsh->run(__APPDIR__.DIRECTORY_SEPARATOR.'run.phpg', 1);
+                    $wsh->run(APPDIR.DIRECTORY_SEPARATOR.'run.phpg', 1);
                     //pclose(popen('start /b "'.__APPDIR__.DIRECTORY_SEPARATOR.'run.phpg"',"r"));
                     self::terminate();
                 }

@@ -1,11 +1,13 @@
 <?php
+require_once 'THSModule.interface.php';
 /**
  * Description of ProductSearchWindow
  *
  * @author orlando
  */
-class ProductsTab extends GtkVbox
+class ProductsModule extends GtkVbox implements THSModule
 {
+    protected $title = 'Productos';
     /**
      *
      * @var ProductSearchFrame
@@ -34,6 +36,16 @@ class ProductsTab extends GtkVbox
         $this->searchFrame->connect_simple('search', array($this, 'search'));
         $this->searchFrame->connect_simple('activated', array($this, 'view'));
         $this->searchFrame->connect('view-right-click', array($this, 'onViewRightClick'));
+    }
+    
+    public function load()
+    {
+        
+    }
+    
+    public function getTitle()
+    {
+        return $this->title;
     }
     
     public function onViewRightClick($view, $event)
@@ -76,7 +88,7 @@ class ProductsTab extends GtkVbox
     {
         $product = $this->searchFrame->listview->getSelected();
         $editWindow = new ProductWindow($product->id, true);
-        $editWindow->set_icon_from_file(THS_LOGO_PATH);
+        $editWindow->set_icon_from_file(APPLOGO);
         $editWindow->show_all(); 
     }
     
@@ -89,7 +101,7 @@ class ProductsTab extends GtkVbox
     {
         $product = $this->searchFrame->listview->getSelected();
         $viewWindow = new ProductWindow($product->id);
-        $viewWindow->set_icon_from_file(THS_LOGO_PATH);
+        $viewWindow->set_icon_from_file(APPLOGO);
         $viewWindow->show_all();
     }
     
@@ -97,7 +109,7 @@ class ProductsTab extends GtkVbox
     {
         $createWindow = new ProductWindow(null, true);
         $createWindow->set_title('Crear Producto');
-        $createWindow->set_icon_from_file(THS_LOGO_PATH);
+        $createWindow->set_icon_from_file(APPLOGO);
         $createWindow->show_all();
     }
 }

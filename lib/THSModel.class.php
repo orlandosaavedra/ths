@@ -1,6 +1,5 @@
 <?php
 
-//namespace THS;
 /**
  * 
  */
@@ -53,6 +52,11 @@ class THSModel extends MySqli
     
     public function __construct()
     {
+        self::$host = THSConfig::get('host');
+        self::$username = THSConfig::get('username');
+        self::$password = THSConfig::get('password');
+        self::$dbname = THSConfig::get('database');
+                
         switch(null){
             case self::$host:
             case self::$username:

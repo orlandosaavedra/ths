@@ -27,9 +27,9 @@ class SaleWindow extends GtkWindow
     private function _build()
     {
         $this->set_position(Gtk::WIN_POS_CENTER_ON_PARENT);
-        $this->set_title(__APP__ .' - Venta');
+        $this->set_title(APPNAME .' - Venta');
         $this->search = new ProductSearchFrame();
-        $this->search->view->connect('right-click', array($this, 'showContextMenu'));
+        $this->search->listview->connect('right-click', array($this, 'showContextMenu'));
         $this->search->connect('search', array($this, 'search'));
         $this->search->connect_simple('activated', array($this, 'addToCart'));
         
@@ -101,7 +101,7 @@ class SaleWindow extends GtkWindow
      */
     public function showProductDetail()
     {
-        $product = $this->search->view->getSelected();
+        $product = $this->search->listview->getSelected();
         if ($product){
             $win = new ProductModifyWindow($product->id);
             $win->set_title('Detalles del producto');

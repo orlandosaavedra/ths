@@ -29,12 +29,24 @@ date_default_timezone_set('America/Santiago');
 //memory limit
 ini_set('memory_limit', '512M');
 
-set_include_path(__DIR__ . '/lib' . PATH_SEPARATOR . __DIR__ . '/lib/fpdf17');
+define('APPNAME', 'The Honda Store');
+define('APPDIR', __DIR__);
+define('APPLIBDIR', __DIR__ . DIRECTORY_SEPARATOR . 'lib');
+define('APPETCDIR', __DIR__ . DIRECTORY_SEPARATOR . 'etc');
+define('APPLOGO', __DIR__ . '/img/logo.png');
 
+$iter = new RecursiveDirectoryIterator(APPLIBDIR);
+$recursive = new RecursiveIteratorIterator($iter, RecursiveIteratorIterator::SELF_FIRST);
 
-define('__APP__', 'The Honda Store');
-define('__APPDIR__', __DIR__);
-define('THS_LOGO_PATH', __DIR__ . '/img/logo.png');
+$incpath = array();
+
+foreach ($recursive as $finfo){
+    if ($finfo->isDir()){
+        $incpath[] = $finfo->getRealPath();
+    }
+}
+
+set_include_path(implode(PATH_SEPARATOR, $incpath));
 
 function __autoload($class){
     $back = debug_backtrace();
@@ -46,12 +58,6 @@ function __autoload($class){
     require_once $class . '.class.php';
 }
 
-$config = parse_ini_file(__DIR__ . '/etc/config.ini');
-
-THSModel::$host = $config['host'];
-THSModel::$dbname = $config['database'];
-THSModel::$username = $config['username'];
-THSModel::$password = $config['password'];
-
+THSConfig::load(APPETCDIR .DIRECTORY_SEPARATOR. 'config.ini');
 
 $main = new Main();

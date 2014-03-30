@@ -69,7 +69,7 @@ class ProductGeneralFrame extends GtkFrame
     protected function createEntries()
     {
         //product->id
-        $this->id = new GtkEntryNumeric(10);
+        $this->id = new GtkEntry();
         $this->id->set_size_request(120, -1);
         //product->partnumber
         $this->partnumber = new GtkEntry();
@@ -78,10 +78,9 @@ class ProductGeneralFrame extends GtkFrame
         $this->condition = new ProductConditionComboBox();
         //product->origin
         $this->origin = new GtkEntry();
-        
-        $this->cost = new GtkEntryNumeric();
-        $this->price = new GtkEntryNumeric();
-        
+        $this->cost = new GtkEntry();
+        $this->price = new GtkEntry();
+
         $this->description = new GtkEntry();  
         $this->description->set_max_length(200);
         $this->description->set_size_request(600, -1);
@@ -89,11 +88,13 @@ class ProductGeneralFrame extends GtkFrame
     
     protected function configureEntries()
     {
+        /**
+         * Add the GtkEntryCompletions
+         */
         $dbm = new THSModel();
         $completion = new GtkEntryCompletion();
         $lstore = new GtkListStore(GObject::TYPE_STRING);
-        
-        
+
         $origins = $dbm->getProductOriginList();
         foreach ($origins as $origin){
             $lstore->append(array($origin));
@@ -101,6 +102,15 @@ class ProductGeneralFrame extends GtkFrame
         
         $completion->set_model($lstore);
         $this->origin->set_completion($completion);
+        
+        /**
+         * Mask Entries
+         */
+        //GtkEntryMasker::mask($this->description);
+        GtkEntryMasker::mask($this->id, 'numeric');
+        GtkEntryMasker::mask($this->cost, 'numeric');
+        GtkEntryMasker::mask($this->price, 'numeric');
+        GtkEntryMasker::mask($this->description, 'uppercase');
     }
     
     protected function layout()
@@ -260,10 +270,10 @@ class ProductGeneralFrame extends GtkFrame
     {
         $this->id->set_editable(!$bool);
         $this->partnumber->set_editable(!$bool);
-        $this->productDescription->set_editable(!$bool);
-        $this->productPrice->set_sensitive(!$bool);
+        $this->description->set_editable(!$bool);
+        $this->price->set_sensitive(!$bool);
         $this->condition->set_sensitive(!$bool);
-        $this->productStateUsed->set_sensitive(!$bool);
+        $this->origin->set_editable(!$bool);
     }
     
     public function blockExistent($bool)

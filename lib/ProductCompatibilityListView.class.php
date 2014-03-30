@@ -28,6 +28,13 @@ class ProductCompatibilityListView extends GtkTreeView
         
     );
     
+    public $__gsignals = array(
+        'right-click' => array(
+            GObject::SIGNAL_RUN_LAST,
+            GObject::TYPE_BOOLEAN,
+            array(GObject::TYPE_LONG, GtkRequisition::gtype))
+    );
+    
     public function __construct()
     {
         $model = new GtkListStore(
@@ -138,3 +145,5 @@ class ProductCompatibilityListView extends GtkTreeView
         }
     }
 }
+
+GObject::register_type('ProductCompatibilityListView');

@@ -25,7 +25,7 @@ class CategoriesWindow extends GtkWindow
         
         $this->set_title('Categorias');
         $this->build();
-        $this->set_wmclass(__APP__, 'Categorias');
+        $this->set_wmclass(APPNAME, 'Categorias');
         $this->fetchCategories();
         $this->view->connect('button-press-event', array($this, 'onButton'));
     }

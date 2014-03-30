@@ -10,9 +10,8 @@ final class ProductSearchFrame extends GtkFrame
      *
      * @var ProductListView
      */
-    public $view;
+    public $listview;
     
-    private $_scrwin;
     /**
      *
      * @var GtkEntry
@@ -69,13 +68,13 @@ final class ProductSearchFrame extends GtkFrame
     
     protected function build()
     {
-        $this->_buildEntryButtons();
+        $this->createEntryButtons();
         
         $this->compatibility = new ProductCompatibilityFilterPanel();
         $this->category = new ProductCategoryComboBox();
         $this->category->fetch();
         
-        $this->_buildListView();
+        $this->createListlistview();
         $this->pack();
     }
     
@@ -85,14 +84,14 @@ final class ProductSearchFrame extends GtkFrame
      */
     public function getSelected()
     {
-        list ($model, $iter) = $this->view->get_selection()->get_selected();
+        list ($model, $iter) = $this->listview->get_selection()->get_selected();
         $row = Product::fetch($model->get_value($iter, 0));
         return $row;
     }
     
     protected function doConnect()
     {
-        $this->view->connect_simple('row-activated', array($this, 'emit'), 'activated');
+        $this->listview->connect_simple('row-activated', array($this, 'emit'), 'activated');
         $this->searchButton->connect_simple('clicked', array($this, 'emit'), 'search');
         $rcfunc = function($view, $event, $frame){
             if ($event->button===3){
@@ -102,7 +101,7 @@ final class ProductSearchFrame extends GtkFrame
             return false;
         };
         
-        $this->view->connect('button-press-event', $rcfunc, $this);
+        $this->listview->connect('button-press-event', $rcfunc, $this);
     }
     
     protected function pack()
@@ -127,7 +126,7 @@ final class ProductSearchFrame extends GtkFrame
 
     }
     
-    private function _buildEntryButtons()
+    private function createEntryButtons()
     {
         $this->searchEntry = new GtkEntry();
         $this->searchButton = new GtkButton('Buscar');
@@ -135,13 +134,13 @@ final class ProductSearchFrame extends GtkFrame
         
     }
     
-    private function _buildListView()
+    private function createListlistview()
     {
         $scrwin = new GtkScrolledWindow();
         $scrwin->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
         
-        $this->view = new ProductListView();
-        $scrwin->add($this->view);
+        $this->listview = new ProductListView();
+        $scrwin->add($this->listview);
         
         $this->_scrwin = $scrwin;
     }
@@ -158,12 +157,13 @@ final class ProductSearchFrame extends GtkFrame
     public function appendResult(Product $product)
     {
         //$stock = $dbm->getProductStock($product->id);
-        $model = $this->view->get_model();
+        $model = $this->listview->get_model();
         $data = array(
             $product->id,
             $product->partnumber,
             $product->description,
             ($product->state==Product::STATE_NEW)? 'Nuevo': 'Usado',
+            $product->origin,
             $product->price,
             $product->stock[Product::STOCK_TOTAL]
                 );
@@ -176,12 +176,12 @@ final class ProductSearchFrame extends GtkFrame
     
     public function clear()
     {
-        $this->view->get_model()->clear();
+        $this->listview->get_model()->clear();
     }
     
     public function getResults()
     {
-        $model = $this->view->get_model();
+        $model = $this->listview->get_model();
         $iter = $model->get_iter_first();
         $ret = array();
         
