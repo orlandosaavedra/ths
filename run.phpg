@@ -33,9 +33,10 @@ define('APPNAME', 'The Honda Store');
 define('APPDIR', __DIR__);
 define('APPLIBDIR', __DIR__ . DIRECTORY_SEPARATOR . 'lib');
 define('APPETCDIR', __DIR__ . DIRECTORY_SEPARATOR . 'etc');
-define('APPLOGO', __DIR__ . '/img/logo.png');
+define('THS_LOGO_FILENAME', __DIR__ . '/img/logo.png');
+define('APPLOGO', THS_LOGO_FILENAME);
 
-$iter = new RecursiveDirectoryIterator(APPLIBDIR);
+$iter = new RecursiveDirectoryIterator(APPDIR);
 $recursive = new RecursiveIteratorIterator($iter, RecursiveIteratorIterator::SELF_FIRST);
 
 $incpath = array();

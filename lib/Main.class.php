@@ -52,7 +52,7 @@ class Main
         
         Main::refresh();
         
-        $host = $GLOBALS['config']['host'];
+        $host = THSConfig::get('host');
         $check = 'http://'.$host.'/ths';
         $download = 'http://'.$host.'/ths/setup.exe';
         $obj = json_decode(file_get_contents($check));

@@ -20,6 +20,7 @@ class ProductCategoryFrame extends GtkFrame
      * @var ProductCategoryComboBox
      */
     public $combo;
+    public $confbtn;
     
     public function __construct()
     {
@@ -28,7 +29,7 @@ class ProductCategoryFrame extends GtkFrame
         $this->combo = new ProductCategoryComboBox();
         $this->connect_simple('lock', array($this->combo, 'set_sensitive'), false);
         
-        $confbtn = new GtkButton('');
+        $this->confbtn = $confbtn = new GtkButton('');
         $image = GtkImage::new_from_icon_name(Gtk::STOCK_PREFERENCES, Gtk::ICON_SIZE_BUTTON);
         $label = $confbtn->get_child();
         $label->destroy();
@@ -77,7 +78,7 @@ class ProductCategoryFrame extends GtkFrame
     public function lock()
     {
         $this->emit('lock');
-       
+        $this->confbtn->destroy();
     }
 }
 

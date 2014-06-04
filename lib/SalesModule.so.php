@@ -5,7 +5,7 @@
  *
  * @author orlando
  */
-class SalesTab extends GtkVbox
+class SalesModule extends GtkVbox implements THSModule
 {
     /**
      *
@@ -39,6 +39,9 @@ class SalesTab extends GtkVbox
         $this->pack_start($this->cart);
     }
     
+    /**
+     * 
+     */
     public function addToCart()
     {
         
@@ -231,5 +234,16 @@ class SalesTab extends GtkVbox
         $dialog->destroy();        
         
     }
+
+    public function getTitle()
+    {
+        return 'Ventas'; 
+    }
+
+    public function load()
+    {
+        
+    }
+
 }
 

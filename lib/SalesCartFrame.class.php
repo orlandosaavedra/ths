@@ -119,27 +119,31 @@ class SalesCartFrame extends GtkFrame
         }
         
         $entries =array(
-            $this->subtotal = new GtkEntryNumeric(10),
+            $this->subtotal = new GtkEntry(),
             array(
-                $this->pdiscount = new GtkEntryNumeric(2),
+                $this->pdiscount = new GtkEntry(),
                 new GtkLabel('%'),
-                $this->discount = new GtkEntryNumeric(10)
+                $this->discount = new GtkEntry()
                 ),
-            $this->net = new GtkEntryNumeric(10),
-            $this->tax = new GtkEntryNumeric(10),
-            $this->total = new GtkEntryNumeric(10)
+            $this->net = new GtkEntry(10),
+            $this->tax = new GtkEntry(10),
+            $this->total = new GtkEntry(10)
         );
         
         foreach ($entries as $entry){
             if (is_array($entry)){
                 $hbox = new GtkHBox;
                 foreach ($entry as $w){
+                    if (is_object($w) && $w instanceof GtkEntry){
+                        GtkEntryMasker::mask($w, 'numeric');
+                    }
                     $hbox->pack_start($w);
                 }
                 $entriesColumn->pack_start($hbox, false, false);
                 continue;
             }
             
+            GtkEntryMasker::mask($entry, 'numeric');
             $entriesColumn->pack_start($entry, false, false);
         }
         

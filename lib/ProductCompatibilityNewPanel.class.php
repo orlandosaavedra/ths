@@ -56,6 +56,9 @@ class ProductCompatibilityNewPanel extends GtkHBox
         $entry->set_completion($completion);
     }
     
+    /**
+     * Creates and configures entries
+     */
     protected function createEntries() 
     {
         $this->model = new GtkEntry(); //new ProductCompatibilityEntry();
@@ -63,6 +66,10 @@ class ProductCompatibilityNewPanel extends GtkHBox
         $this->other = new GtkEntry(); //new ProductCompatibilityEntry();
         $this->year_from = new ProductCompatibilityFilterPanelComboBox(GObject::TYPE_STRING);
         $this->year_to = new ProductCompatibilityFilterPanelComboBox(GObject::TYPE_STRING);
+        
+        //Force entries to be uppercase only
+        GtkEntryMasker::mask($this->model, 'uppercase');
+        GtkEntryMasker::mask($this->version, 'uppercase');
         
         /** Connecting **/
         $this->year_from->connect('on-select', array($this, 'changed'));

@@ -59,6 +59,12 @@ final class ProductSearchFrame extends GtkFrame
             array(GOBject::TYPE_LONG, GtkRequisition::gtype))
         );
     
+    /**
+     *
+     * @var GtkScrolledWindow
+     */
+    protected $scrwin;
+    
     public function __construct()
     {
         parent::__construct();
@@ -111,18 +117,16 @@ final class ProductSearchFrame extends GtkFrame
         
         $this->add($vbox);
         
-        $hbox->pack_start(new GtkLabel('Busqueda:'));
+        $hbox->pack_start(new GtkLabel('Palabras clave: '), false, false);
         $hbox->pack_start($this->searchEntry);
-        $hbox->pack_start($this->searchButton, false, false, false  );
+        $hbox->pack_start(new GtkLabel('Categoria: '), false, false);
+        $hbox->pack_start($this->category);
         
         $vbox->pack_start($hbox, false, false, false);
         $vbox->pack_start($this->compatibility, false, false);
+        $vbox->pack_start($this->searchButton, false, false);
+        $vbox->pack_start($this->scrwin);
         
-        $hbox = new GtkHBox();
-        $hbox->pack_start(new GtkLabel('Categoria:'), false, false);
-        $hbox->pack_start($this->category);
-        $vbox->pack_start($hbox, false, false);
-        $vbox->pack_start($this->_scrwin);
 
     }
     
@@ -130,8 +134,7 @@ final class ProductSearchFrame extends GtkFrame
     {
         $this->searchEntry = new GtkEntry();
         $this->searchButton = new GtkButton('Buscar');
-        $this->searchEntry->connect_simple('activate', array($this->searchButton, 'clicked'));
-        
+        $this->searchEntry->connect_simple('activate', array($this->searchButton, 'clicked')); 
     }
     
     private function createListlistview()
@@ -142,7 +145,7 @@ final class ProductSearchFrame extends GtkFrame
         $this->listview = new ProductListView();
         $scrwin->add($this->listview);
         
-        $this->_scrwin = $scrwin;
+        $this->scrwin = $scrwin;
     }
     
     /**

@@ -20,6 +20,7 @@ class ProductsModule extends GtkVbox implements THSModule
         
         $createPanel = new GtkHBox(true);
         $createPanel->pack_start(new GtkLabel('Crear Producto:'));
+        
         $createbtn = GtkButton::new_from_stock(Gtk::STOCK_NEW);
         $createbtn->connect_simple('clicked', array($this, 'create'));
         $createPanel->pack_start($createbtn);
@@ -37,6 +38,7 @@ class ProductsModule extends GtkVbox implements THSModule
         $this->searchFrame->connect_simple('activated', array($this, 'view'));
         $this->searchFrame->connect('view-right-click', array($this, 'onViewRightClick'));
     }
+   
     
     public function load()
     {
@@ -48,9 +50,14 @@ class ProductsModule extends GtkVbox implements THSModule
         return $this->title;
     }
     
+    /**
+     * 
+     * @param type $view
+     * @param type $event
+     * @return boolean
+     */
     public function onViewRightClick($view, $event)
     {
-
         $menu = new GtkMenu();
         $menuitem[0] = new GtkMenuItem('Ver detalles');
         $menuitem[0]->connect_simple('activate', array($this, 'view'));

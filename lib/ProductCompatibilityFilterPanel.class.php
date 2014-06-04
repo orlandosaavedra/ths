@@ -60,18 +60,18 @@ class ProductCompatibilityFilterPanel extends GtkHBox
     
     private function construct()
     {        
-        /** Packing **/
-        $this->pack_start(new GtkLabel('Modelo:'), false, false);
-        $this->pack_start($this->model);
-        $this->pack_start(new GtkLabel('Version:'), false, false);
-        $this->pack_start($this->version);
-        $this->pack_start(new GtkLabel('Otros:'), false, false);
-        $this->pack_Start($this->other);
-        $this->pack_start(new GtkLabel('Desde:'), false, false);
-        $this->pack_start($this->year_from);
-        $this->pack_start(new GtkLabel('Hasta:'), false, false);
-        $this->pack_start($this->year_to);
+        $layout = array(
+            'Modelo' => $this->model, 
+            'Version'=> $this->version,
+            'Otros' => $this->other,
+            'Desde'=> $this->year_from,
+            'Hasta'=>$this->year_to
+        );
         
+        foreach ($layout as $label => $entry){
+            $this->pack_start(new GtkLabel($label .': '), false, false);
+            $this->pack_start($entry);
+        }        
     }
     
     public function changed($combo=null)
